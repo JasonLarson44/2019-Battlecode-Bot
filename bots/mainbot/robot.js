@@ -1,6 +1,7 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
 import castle from './castle.js'
 import crusader from './crusader.js'
+import pilgrim from './pilgrim.js'
 
 class MyRobot extends BCAbstractRobot {
 	constructor() {
@@ -18,6 +19,9 @@ class MyRobot extends BCAbstractRobot {
         		break;
 			case SPECS.CRUSADER:
 				this.myType = crusader;
+				break;
+			case SPECS.PILGRIM:
+				this.myType = pilgrim;
 				break;
         	default:
 				break;
