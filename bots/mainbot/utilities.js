@@ -14,6 +14,7 @@ utilities.isOpen = (self, location) => {
 	return self.map[location.y][location.x] && (self.getVisibleRobotMap()[location.y][location.x] <= 0);
 }
 
+// Prepend the round number before logging. May extend to log more information
 utilities.log = (self, message) => {
 	self.log(`Round ${self.me.turn} - ${message}`);
 }
