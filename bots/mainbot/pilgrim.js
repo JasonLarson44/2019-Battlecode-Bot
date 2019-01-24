@@ -1,6 +1,7 @@
 'use strict';
 
 import {BCAbstractRobot, SPECS} from 'battlecode';
+import utilities from './utilities.js'
 
 const pilgrim = {};
 
@@ -26,7 +27,7 @@ pilgrim.findClosestKarbonite = (self) => {
 		}
 	}
 
-	self.log(`Found karbonite at (${closestLocation.x}, ${closestLocation.y})`);
+	utilities.log(self, `Found karbonite at (${closestLocation.x}, ${closestLocation.y})`);
 	return closestLocation;
 }
 	
@@ -48,7 +49,7 @@ pilgrim.findClosestFuel = (self) => {
 		}
 	}
 
-	self.log(`Found fuel at (${closestLocation.x}, ${closestLocation.y})`);
+	utilities.log(self, `Found fuel at (${closestLocation.x}, ${closestLocation.y})`);
 	return closestLocation;
 }
 
@@ -58,12 +59,12 @@ pilgrim.takeTurn = (self) => {
 		for (var robot of self.getVisibleRobots()) {
 			if (robot.unit === SPECS.CASTLE) {
 				pilgrim.home = {x: robot.x, y: robot.y};
-				self.log(`Castle at (${pilgrim.home.x}, ${pilgrim.home.y})`);
+				utilities.log(self, `Castle at (${pilgrim.home.x}, ${pilgrim.home.y})`);
 				break;
 			}
 		}
 		if (pilgrim.home === undefined) {
-			self.log("No castle found!");
+			utilities.log(self, "No castle found!");
 		}
 	}
 
@@ -75,7 +76,7 @@ pilgrim.takeTurn = (self) => {
 				pilgrim.mission = 'fuel'
 			}
 			pilgrim.target = undefined;
-			self.log ("Pilgrim " + self.id + " on " + pilgrim.mission + " mission")
+			utilities.log(self, "Pilgrim " + self.id + " on " + pilgrim.mission + " mission")
 			break;
 		
 		case 'karbonite':
@@ -83,15 +84,15 @@ pilgrim.takeTurn = (self) => {
 				pilgrim.target = pilgrim.findClosestKarbonite(self);
 			} else if (pilgrim.target.x === self.me.x && pilgrim.target.y === self.me.y) {
 				if (self.me.karbonite < SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
-					self.log(`Mining Karbonite at (${self.me.x}, ${self.me.y}) (Current: ${self.me.karbonite})`);
+					utilities.log(self, `Mining Karbonite at (${self.me.x}, ${self.me.y}) (Current: ${self.me.karbonite})`);
 					return self.mine();
 				} else {
-					self.log("Max karbonite capacity reached. Returning home.");
+					utilities.log(self, "Max karbonite capacity reached. Returning home.");
 					pilgrim.mission = 'return';
 					pilgrim.move(self, pilgrim.home);
 				}
 			} else {
-				self.log(`Target: (${pilgrim.target.x}, ${pilgrim.target.y})    Location: ${[self.me.x, self.me.y]}`)
+				utilities.log(self, `Target: (${pilgrim.target.x}, ${pilgrim.target.y})    Location: ${[self.me.x, self.me.y]}`)
 				return pilgrim.move(self, pilgrim.target);
 			}
 			break;
@@ -101,23 +102,23 @@ pilgrim.takeTurn = (self) => {
 				pilgrim.target = pilgrim.findClosestFuel(self);
 			} else if (pilgrim.target.x === self.me.x && pilgrim.target.y === self.me.y) {
 				if (self.me.fuel < SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY) {
-					self.log(`Mining fuel at (${self.me.x}, ${self.me.y}) (Current: ${self.me.fuel})`);
+					utilities.log(self, `Mining fuel at (${self.me.x}, ${self.me.y}) (Current: ${self.me.fuel})`);
 					return self.mine();
 				} else {
-					self.log("Max fuel capacity reached. Returning home.");
+					utilities.log(self, "Max fuel capacity reached. Returning home.");
 					pilgrim.mission = 'return';
 					pilgrim.move(self, pilgrim.home);
 				}
 			} else {
-				self.log(`Target: (${pilgrim.target.x}, ${pilgrim.target.y})    Location: ${[self.me.x, self.me.y]}`)
+				utilities.log(self, `Target: (${pilgrim.target.x}, ${pilgrim.target.y})    Location: ${[self.me.x, self.me.y]}`)
 				return pilgrim.move(self, pilgrim.target);
 			}
 			break;
 
 		case 'return':
-			if (Math.abs(self.me.x - pilgrim.home.x + self.me.y - pilgrim.home.y) < 2) {
+			if (Math.abs(self.me.x - pilgrim.home.x) <= 1 && Math.abs(self.me.y - pilgrim.home.y) <= 1) {
 				pilgrim.mission = undefined;
-				self.log(`Giving ${self.me.karbonite} karbonite to castle at (${pilgrim.home.x}, ${pilgrim.home.y}), delta (${self.me.x - pilgrim.home.x}, ${self.me.y - pilgrim.home.y})`)
+				utilities.log(self, `Giving ${self.me.karbonite} karbonite to castle at (${pilgrim.home.x}, ${pilgrim.home.y}), delta (${self.me.x - pilgrim.home.x}, ${self.me.y - pilgrim.home.y})`)
 				return self.give(pilgrim.home.x - self.me.x, pilgrim.home.y - self.me.y, self.me.karbonite, self.me.fuel);
 			} else {
 				return pilgrim.move(self, pilgrim.home);
@@ -140,11 +141,11 @@ pilgrim.move = (self, target) => {
 		dy -= 1;
 	}
 
-	if (self.map[self.me.x + dx][self.me.y + dy]) {
-		self.log("Moving from (" + self.me.x + ", " + self.me.y + ") in (" + dx + ", " + dy + ") toward (" + target.x + ", " + target.y + ")");
+	if (utilities.isOpen(self, {x: self.me.x + dx, y: self.me.y + dy})) {
+		utilities.log(self, "Moving from (" + self.me.x + ", " + self.me.y + ") in (" + dx + ", " + dy + ") toward (" + target.x + ", " + target.y + ")");
 		return self.move(dx, dy);
 	} else {
-		self.log("Path occupied.");
+		utilities.log(self, "Path occupied.");
 	}
 
 }
