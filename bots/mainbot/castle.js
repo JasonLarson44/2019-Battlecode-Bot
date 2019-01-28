@@ -38,8 +38,8 @@ castle.takeTurn = (self) => {
 	{
 		var d = getBuildDir(self.me);
         if (!(d === undefined)){
-            self.log('Building a pilgrim at ' + (self.me.x+1) + ',' + (self.me.y+1));
-            pilgrims.number++;
+            self.log('Building a crusader at ' + (self.me.x+1) + ',' + (self.me.y+1));
+          //  pilgrims.number++;
             return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
         }
 	}
@@ -48,8 +48,8 @@ castle.takeTurn = (self) => {
 	{
 		var d = getBuildDir(self.me);
         if (!(d === undefined)){
-            self.log('Building a pilgrim at ' + (self.me.x+1) + ',' + (self.me.y+1));
-            pilgrims.number++;
+            self.log('Building a prophet at ' + (self.me.x+1) + ',' + (self.me.y+1));
+           // pilgrims.number++;
             return self.buildUnit(SPECS.PROPHET, d.x, d.y);
         }
 	}
@@ -75,7 +75,7 @@ castle.takeTurn = (self) => {
 			var d = getBuildDir(self.me);
 			if (!(d === undefined)){
 				self.log('Building a crusadder at ' + (self.me.x+1) + ',' + (self.me.y+1));
-				pilgrims.number++;
+		//		pilgrims.number++;
 				return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
 			}
 	 
