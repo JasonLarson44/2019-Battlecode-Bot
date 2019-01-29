@@ -8,6 +8,7 @@ class MyRobot extends BCAbstractRobot {
         super();
         this.myType = undefined;
         this.step = -1;
+        this.moveQueue = [];
     }
 	
 	turn() {

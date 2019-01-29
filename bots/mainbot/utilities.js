@@ -1,6 +1,7 @@
 'use strict';
+import {SPECS} from 'battlecode';
 
-const utilities = {}
+const utilities = {};
 
 // Returns true if the location is a) passable and b) the current robot can not
 // see any robot in that location.
@@ -12,11 +13,31 @@ utilities.isOpen = (self, location) => {
 	}
 	// utilities.log(self, `isOpen(${location.x}, ${location.y}) = ${self.map[location.y][location.x] && (self.getVisibleRobotMap()[location.y][location.x] <= 0)}`);
 	return self.map[location.y][location.x] && (self.getVisibleRobotMap()[location.y][location.x] <= 0);
-}
+};
 
 // Prepend the round number before logging. May extend to log more information
 utilities.log = (self, message) => {
 	self.log(`Round ${self.me.turn} - ${message}`);
-}
+};
+
+utilities.enemiesInRange = (self) => {
+	let enemies = [];
+	let botSpec = SPECS['UNITS'][self.me.unit];
+	let minRange = botSpec['ATTACK_RADIUS'][0];
+	let maxRange = botSpec['ATTACK_RADIUS'][1];
+	let myTeam = self.me.team;
+	let robotsInVision = self.getVisibleRobots();
+	for(let i = 0; i < robotsInVision.length; ++i){
+		if(robotsInVision[i].team !== myTeam && Math.pow(utilities.getDistance(self.me, robotsInVision[i]), 2) < maxRange){
+			enemies.push(robotsInVision[i])
+		}
+	}
+	return enemies;
+};
+
+utilities.getDistance = (start, end) => {
+    //get the manhattan distance
+    return (Math.abs(start.x - end.x) + Math.abs(start.y - end.y))
+};
 
 export default utilities;
