@@ -82,43 +82,23 @@ pilgrim.takeTurn = (self) => {
 
 	switch (pilgrim.mission) {
 		case 'karbonite':
-			// On top of a karbonite deposit
-			if (pilgrim.target.x === self.me.x && pilgrim.target.y === self.me.y) {
-				// Mine until we're full
-				if (self.me.karbonite < SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
-					utilities.log(self, `Mining Karbonite at (${self.me.x}, ${self.me.y}) (Current: ${self.me.karbonite})`);
-					return self.mine();
-
-				// Reached maximum capacity, return to home castle
-				} else {
-					utilities.log(self, "Max karbonite capacity reached. Returning home.");
-					pilgrim.mission = 'return';
-					pilgrim.move(self, pilgrim.home);
-				}
-
-			// Move toward the targeted karbonite deposit
-			} else {
-				utilities.log(self, `Target: (${pilgrim.target.x}, ${pilgrim.target.y})    Location: ${[self.me.x, self.me.y]}`)
-				return pilgrim.move(self, pilgrim.target);
-			}
-			break;
-
 		case 'fuel':
-			// On top of a fuel deposit
+			// On top of a resource deposit
 			if (pilgrim.target.x === self.me.x && pilgrim.target.y === self.me.y) {
 				// Mine until we're full
-				if (self.me.fuel < SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY) {
-					utilities.log(self, `Mining fuel at (${self.me.x}, ${self.me.y}) (Current: ${self.me.fuel})`);
+				if (self.me.fuel < SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY && 
+					self.me.karbonite < SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
+					utilities.log(self, `Mining ${pilgrim.mission} at (${self.me.x}, ${self.me.y}) (Current: ${Math.max(self.me.fuel, self.me.karbonite)})`);
 					return self.mine();
 
 				// Reached maximum capacity, return to home castle
 				} else {
-					utilities.log(self, "Max fuel capacity reached. Returning home.");
+					utilities.log(self, `Max ${pilgrim.mission} capacity reached. Returning home.`);
 					pilgrim.mission = 'return';
 					pilgrim.move(self, pilgrim.home);
 				}
 
-			// Move toward the targeted fuel deposit
+			// Move toward the targeted resource deposit
 			} else {
 				utilities.log(self, `Target: (${pilgrim.target.x}, ${pilgrim.target.y})    Location: ${[self.me.x, self.me.y]}`)
 				return pilgrim.move(self, pilgrim.target);
@@ -128,7 +108,6 @@ pilgrim.takeTurn = (self) => {
 		// Return to home castle to deposit mined resources
 		case 'return':
 			// Adjacent to castle. Deposit resources
-			// if (Math.abs(self.me.x - pilgrim.home.x) <= 1 && Math.abs(self.me.y - pilgrim.home.y) <= 1) {
 			if (utilities.isAdjacent(self.me, pilgrim.home)) {
 				pilgrim.mission = undefined;
 				utilities.log(self, `Giving ${self.me.karbonite} karbonite to castle at (${pilgrim.home.x}, ${pilgrim.home.y}), delta (${self.me.x - pilgrim.home.x}, ${self.me.y - pilgrim.home.y})`)
