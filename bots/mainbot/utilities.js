@@ -19,4 +19,8 @@ utilities.log = (self, message) => {
 	self.log(`Round ${self.me.turn} - ${message}`);
 }
 
+utilities.isAdjacent = (loc1, loc2) => {
+	return Math.abs(loc1.x - loc2.x) <= 1 && Math.abs(loc1.y - loc2.y) <= 1
+}
+
 export default utilities;

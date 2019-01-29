@@ -5,55 +5,49 @@ import utilities from './utilities.js'
 
 const pilgrim = {};
 
-pilgrim.mission = undefined;
-pilgrim.target = undefined;
-pilgrim.home = undefined;
+pilgrim.mission = undefined;// Current mission to fulfill
+pilgrim.target = undefined;	// Location of resource we are mining
+pilgrim.home = undefined;	// Location of originating castle
+pilgrim.blacklist = [];		// List of resource locations to ignore
 
-// Find the closest Karbonite deposit to my current location
+	
+// Find the closest resource deposit that has not been blacklisted to my 
+// current location
+// Parameters: 
+//		map - Either this.fuel_map or this.karbonite_map
+//		blacklist - A list of locations to ignore when searching for resources
 // Returns: Object with x and y properties specifying the coordinates of the
-// closest Karbonite deposit
-pilgrim.findClosestKarbonite = (self) => {
+// closest resource deposit
+pilgrim.findClosestResource = (self, map, blacklist=[]) => {
 	var closestLocation = undefined;
 	var closestDistance = Infinity;
 	
 	var i, j;
-	for (i = 0; i < self.karbonite_map.length; i++) {
-		for (j = 0; j < self.karbonite_map[i].length; j++) {
-			if (self.karbonite_map[i][j]) {
+	for (i = 0; i < map.length; i++) {
+		for (j = 0; j < map[i].length; j++) {
+			if (map[i][j]) {
 				var distance = Math.pow(self.me.x - j, 2) + Math.pow(self.me.y - i, 2);
 				if (distance < closestDistance) {
-					closestDistance = distance;
-					closestLocation = {x: j, y: i};
+					var blacklisted = false;
+
+					for (var loc of pilgrim.blacklist) {
+						if (loc.x == j && loc.y == i) {
+							// Blacklisted
+							blacklisted = true;
+							break;
+						}
+					}
+
+					if (!blacklisted) {
+						closestDistance = distance;
+						closestLocation = {x: j, y: i};
+					}					
 				}
 			}
 		}
 	}
 
-	utilities.log(self, `Found karbonite at (${closestLocation.x}, ${closestLocation.y})`);
-	return closestLocation;
-}
-	
-// Find the closest fuel deposit to my current location
-// Returns: Object with x and y properties specifying the coordinates of the
-// closest fuel deposit
-pilgrim.findClosestFuel = (self) => {
-	var closestLocation = undefined;
-	var closestDistance = Infinity;
-	
-	var i, j;
-	for (i = 0; i < self.fuel_map.length; i++) {
-		for (j = 0; j < self.fuel_map[i].length; j++) {
-			if (self.fuel_map[i][j]) {
-				var distance = Math.pow(self.me.x - j, 2) + Math.pow(self.me.y - i, 2);
-				if (distance < closestDistance) {
-					closestDistance = distance;
-					closestLocation = {x: j, y: i};
-				}
-			}
-		}
-	}
-
-	utilities.log(self, `Found fuel at (${closestLocation.x}, ${closestLocation.y})`);
+	utilities.log(self, `Found resource at (${closestLocation.x}, ${closestLocation.y})`);
 	return closestLocation;
 }
 
@@ -75,24 +69,21 @@ pilgrim.takeTurn = (self) => {
 		}
 	}
 
-	switch (pilgrim.mission) {
-		case undefined:
-			if (self.karbonite < 500) {
-				pilgrim.mission = 'karbonite'
-			} else {
-				pilgrim.mission = 'fuel'
-			}
-			pilgrim.target = undefined;
-			utilities.log(self, `Pilgrim on ${pilgrim.mission} mission`)
-			break;
-		
-		case 'karbonite':
-			// Find the closest Karbonite deposit to mine from
-			if (pilgrim.target === undefined) {
-				pilgrim.target = pilgrim.findClosestKarbonite(self);
+	if (pilgrim.mission === undefined) {
+		if (self.karbonite < 500) {
+			pilgrim.mission = 'karbonite'
+			pilgrim.target = pilgrim.findClosestResource(self, self.karbonite_map);
+		} else {
+			pilgrim.mission = 'fuel'
+			pilgrim.target = pilgrim.findClosestResource(self, self.fuel_map);
+		}
+		utilities.log(self, `Pilgrim on ${pilgrim.mission} mission at (${pilgrim.target.x}, ${pilgrim.target.y})`)
+	}
 
+	switch (pilgrim.mission) {
+		case 'karbonite':
 			// On top of a karbonite deposit
-			} else if (pilgrim.target.x === self.me.x && pilgrim.target.y === self.me.y) {
+			if (pilgrim.target.x === self.me.x && pilgrim.target.y === self.me.y) {
 				// Mine until we're full
 				if (self.me.karbonite < SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
 					utilities.log(self, `Mining Karbonite at (${self.me.x}, ${self.me.y}) (Current: ${self.me.karbonite})`);
@@ -113,12 +104,8 @@ pilgrim.takeTurn = (self) => {
 			break;
 
 		case 'fuel':
-			// Find the closest fuel deposit to mine from
-			if (pilgrim.target === undefined) {
-				pilgrim.target = pilgrim.findClosestFuel(self);
-
 			// On top of a fuel deposit
-			} else if (pilgrim.target.x === self.me.x && pilgrim.target.y === self.me.y) {
+			if (pilgrim.target.x === self.me.x && pilgrim.target.y === self.me.y) {
 				// Mine until we're full
 				if (self.me.fuel < SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY) {
 					utilities.log(self, `Mining fuel at (${self.me.x}, ${self.me.y}) (Current: ${self.me.fuel})`);
@@ -141,7 +128,8 @@ pilgrim.takeTurn = (self) => {
 		// Return to home castle to deposit mined resources
 		case 'return':
 			// Adjacent to castle. Deposit resources
-			if (Math.abs(self.me.x - pilgrim.home.x) <= 1 && Math.abs(self.me.y - pilgrim.home.y) <= 1) {
+			// if (Math.abs(self.me.x - pilgrim.home.x) <= 1 && Math.abs(self.me.y - pilgrim.home.y) <= 1) {
+			if (utilities.isAdjacent(self.me, pilgrim.home)) {
 				pilgrim.mission = undefined;
 				utilities.log(self, `Giving ${self.me.karbonite} karbonite to castle at (${pilgrim.home.x}, ${pilgrim.home.y}), delta (${self.me.x - pilgrim.home.x}, ${self.me.y - pilgrim.home.y})`)
 				return self.give(pilgrim.home.x - self.me.x, pilgrim.home.y - self.me.y, self.me.karbonite, self.me.fuel);
