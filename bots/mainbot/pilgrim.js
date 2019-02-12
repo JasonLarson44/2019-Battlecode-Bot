@@ -2,6 +2,7 @@
 
 import {SPECS} from 'battlecode';
 import utilities from './utilities.js'
+import movement from './movement.js'
 
 const pilgrim = {};
 
@@ -100,8 +101,17 @@ pilgrim.takeTurn = (self) => {
 
 			// Move toward the targeted resource deposit
 			} else {
-				utilities.log(self, `Target: (${pilgrim.target.x}, ${pilgrim.target.y})    Location: ${[self.me.x, self.me.y]}`)
-				return pilgrim.move(self, pilgrim.target);
+				if (utilities.isAdjacent(self.me, pilgrim.target) &&
+				    !utilities.isOpen(self, pilgrim.target)) {
+					// Resource occupied. Blacklist it and try another one.
+					utilities.log(self, `Resource at (${pilgrim.target.x}, ${pilgrim.target.y}) occupied!`)
+					pilgrim.blacklist.push(pilgrim.target);
+					pilgrim.mission = undefined;
+					return pilgrim.takeTurn(self);
+				} else {
+					utilities.log(self, `Target: (${pilgrim.target.x}, ${pilgrim.target.y})    Location: ${[self.me.x, self.me.y]}`)
+					return pilgrim.move(self, pilgrim.target);
+				}
 			}
 			break;
 
@@ -115,35 +125,71 @@ pilgrim.takeTurn = (self) => {
 
 			// Move toward home castle
 			} else {
+				utilities.log(self, `Moving from (${self.me.x}, ${self.me.y}) toward home at (${pilgrim.home.x}, ${pilgrim.home.y}) - adjacent? ${utilities.isAdjacent(self.me, pilgrim.home)}`);
 				return pilgrim.move(self, pilgrim.home);
 			}
 	}
 }
 
-// Move toward a target. Will only move to one of the 8 adjacent spaces around
-// the robot's current location. Will not do anything if the location the robot
-// wants to move to is impassable or occupied.
+// Move toward a target.
 pilgrim.move = (self, target) => {
-	var dx = 0, dy = 0;
-	if (self.me.x < target.x) {
-		dx += 1;
-	} else if (self.me.x > target.x) {
-		dx -= 1;
+	let path = undefined;
+
+	try {
+		utilities.log(self, `Target: (${target.x}, ${target.y})`);
+		path = movement.moveTo(self, target.x, target.y);
+		utilities.log(self, `Path length: ${path.length}`);
+	} catch(e) {
+		utilities.log(self, "Path-finding algorithm raised an exception! Reverting to random movement.");
+		return pilgrim.random_move(self);
+	}
+	let i = 0;
+
+	while (i < path.length && !utilities.isOpen(self, path[i])) {
+		utilities.log(self, `Step ${i}: (${path[i].x}, ${path[i].y})`)
+		i++;
 	}
 
-	if (self.me.y < target.y) {
-		dy += 1;
-	} else if (self.me.y > target.y) {
-		dy -= 1;
+	if (i >= path.length) {
+		utilities.log(self, "Failed to find a path! Reverting to random movement.");
+		return pilgrim.random_move(self);
 	}
 
+	utilities.log(self, "Distance to step: " + utilities.getDistance(self.me, path[i]));
+	utilities.log(self, "Max speed: " + SPECS.UNITS[SPECS.PILGRIM].SPEED);
+	if (utilities.getDistance(self.me, path[i]) > SPECS.UNITS[SPECS.PILGRIM].SPEED) {
+		utilities.log(self, "Distance to far! Reverting to random movement.");
+		return pilgrim.random_move(self);
+	}
+
+	let step = path[i];
+
+	utilities.log(self, `step: (${step.x}, ${step.y})`);
+	let dx = step.x - self.me.x;
+	let dy = step.y - self.me.y;
+
+	utilities.log(self, "Moving from (" + self.me.x + ", " + self.me.y + ") stepping (" + dx + ", " + dy + ") toward (" + target.x + ", " + target.y + ")");
 	if (utilities.isOpen(self, {x: self.me.x + dx, y: self.me.y + dy})) {
-		utilities.log(self, "Moving from (" + self.me.x + ", " + self.me.y + ") stepping (" + dx + ", " + dy + ") toward (" + target.x + ", " + target.y + ")");
 		return self.move(dx, dy);
 	} else {
 		utilities.log(self, "Path occupied.");
 	}
+}
 
+// Move in a random direction. Will only move to one of the 8 adjacent spaces around
+// the robot's current location. Will not do anything if the location the robot
+// wants to move to is impassable or occupied.
+pilgrim.random_move = (self) => {
+	let dx = Math.floor(Math.random() * 3) - 1;
+	let dy = Math.floor(Math.random() * 3) - 1;
+
+	if (utilities.isOpen(self, {x: self.me.x + dx, y: self.me.y + dy})) {
+		utilities.log(self, "Randomly moving from (" + self.me.x + ", " + self.me.y + ") stepping (" + dx + ", " + dy + ")");
+		return self.move(dx, dy);
+	} else {
+		utilities.log(self, "Random movement location occupied.");
+		return;
+	}
 }
 
 export default pilgrim;
