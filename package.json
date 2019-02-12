@@ -10,7 +10,9 @@
     "mocha": "^5.2.0"
   },
   "scripts": {
-    "test": "mocha"
+    "pretest": "bc19compile -f -d bots/mainbot/ -o test_compiled_bot.js",
+    "test": "mocha",
+    "posttest": "rm test_compiled_bot.js"
   },
   "repository": {
     "type": "git",
