@@ -1,5 +1,7 @@
 const assert = require('assert');
-const bot = require('../compiled_bot.js');
+const rewire = require('rewire');
+
+const bot = rewire('./compiled_bot.js');
 
 describe('Array', function() {
   describe('#indexOf()', function() {
@@ -9,11 +11,11 @@ describe('Array', function() {
   });
 });
 
+let utilities = bot.__get__("utilities");
 describe("utilities", function() {
   describe("#getDistance()", function() {
     it("should return 5 for points (2, 2) and (5, 6)", function() {
-      console.log(bot);
-      assert.equal(bot.utilities.getDistance({x:2,y:2}, {x:5,y:6}), 25);
+      assert.equal(utilities.getDistance({x:2,y:2}, {x:5,y:6}), 25);
     })
   })
 });
