@@ -7,11 +7,12 @@
     "rewire": "^4.0.1"
   },
   "devDependencies": {
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "nyc": "^13.2.0"
   },
   "scripts": {
     "pretest": "bc19compile -f -d bots/mainbot/ -o test_compiled_bot.js",
-    "test": "mocha",
+    "test": "nyc --reporter=text mocha",
     "posttest": "rm test_compiled_bot.js"
   },
   "repository": {
