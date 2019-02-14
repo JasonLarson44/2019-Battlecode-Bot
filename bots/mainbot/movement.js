@@ -10,7 +10,9 @@ movement.moveTo = (self, x, y) => {
         return [];
     }
     let path = movement.aStar(self, [self.me.y, self.me.x], [y, x], self.map);
-    return path
+    let condensed = movement.condense_path(SPECS['UNITS'][self.me.unit]['SPEED'], path)
+    return condensed
+
 };
 
 
@@ -19,6 +21,9 @@ movement.aStar = (self, start, dest, theMap) => {
     let openList = [];
     // The map
     let map = [];
+
+    //  Get all visible bots
+    let visibleBots = self.getVisibleRobots()
 
     // Used to hold nodes adjacent to curr
     let adjacent = [];
@@ -31,9 +36,9 @@ movement.aStar = (self, start, dest, theMap) => {
     let gScore = 0;
 
     // Set up the map. If map[x][y] is false then it is impassable
-    for (let y = 0; y < theMap.length; ++y) {
+    for (let y = 0; y < theMap.length; y+=1) {
         map[y] = [];
-        for (let x = 0; x < theMap[y].length; ++x) {
+        for (let x = 0; x < theMap[y].length; x+=1) {
             map[y][x] =
                 { g:0,
                   h:0,
@@ -50,6 +55,11 @@ movement.aStar = (self, start, dest, theMap) => {
             }
         }
     }
+
+    for(let i = 0; i < visibleBots.length; i+=1){
+        map[visibleBots[i].y][visibleBots[i].x].closed = true;
+    }
+    //map[self.y][self.x].closed = false;
 
     let goal = map[dest[0]][dest[1]];
 
@@ -74,22 +84,22 @@ movement.aStar = (self, start, dest, theMap) => {
 
         adjacent = movement.getOpenAdj(map, curr);
 
-        for(let i = 0; i < adjacent.length; ++i){
+        for(let i = 0; i < adjacent.length; i+=1){
             neighbor = adjacent[i];
-            gScore = curr.g + utilities.getDistance(curr, neighbor);
+            gScore = curr.g + utilities.getManhattanDistance(curr, neighbor);
 
             if(!neighbor.seen){
                 neighbor.seen = true;
                 openList.push(neighbor);
                 neighbor.parent = curr;
                 neighbor.g = gScore;
-                neighbor.h = utilities.getDistance(curr, goal);
+                neighbor.h = utilities.getManhattanDistance(curr, goal);
                 neighbor.f = neighbor.g + neighbor.h
             }
             else if(gScore < neighbor.g){
                 neighbor.parent = curr;
                 neighbor.g = gScore;
-                neighbor.h = utilities.getDistance(curr, goal);
+                neighbor.h = utilities.getManhattanDistance(curr, goal);
                 neighbor.f = neighbor.g + neighbor.h
             }
 
@@ -116,7 +126,7 @@ movement.selectNext = (openList) => {
     let min = openList[0].f;
     let minInd = 0;
 
-    for (let i=1; i < openList.length; ++i){
+    for (let i=1; i < openList.length; i+=1){
         if (openList[i].f < min){
             minInd = i
         }
@@ -125,38 +135,81 @@ movement.selectNext = (openList) => {
 };
 
 movement.getOpenAdj = (map, curr) => {
+    if(!map || !curr || !map[curr.y] || !map[0][curr.x]){
+        return [];
+    }
 
-    // All adjacent nodes
-    let adj;
-    if(!map[0][curr.x+1]){
-        adj = [map[curr.y][curr.x - 1], map[curr.y + 1][curr.x], map[curr.y - 1][curr.x],
-               map[curr.y - 1][curr.x - 1], map[curr.y + 1][curr.x -1]];
+    let y = curr.y;
+    let x = curr.x;
+    let y_length = map.length -1;
+    let x_length = map[0].length -1;
+
+    let adj = [];
+
+    if(y < y_length){
+        adj.push(map[y+1][x]);
+        // If in x bounds
+        if(x < x_length){
+            adj.push(map[y+1][x+1])
+        }
+        if(x > 0){
+            adj.push(map[y+1][x-1])
+        }
     }
-    else if(!map[0][curr.x-1]){
-        adj = [map[curr.y][curr.x + 1], map[curr.y + 1][curr.x], map[curr.y - 1][curr.x],
-               map[curr.y + 1][curr.x + 1], map[curr.y - 1][curr.x + 1]];
+    if(y > 0){
+        adj.push(map[y-1][x]);
+        if(x < x_length){
+            adj.push(map[y-1][x+1])
+        }
+        if(x > 0){
+            adj.push(map[y-1][x-1])
+        }
+
+
     }
-    else if(!map[curr.y+1]){
-        adj = [map[curr.y][curr.x + 1], map[curr.y][curr.x - 1], map[curr.y - 1][curr.x],
-               map[curr.y - 1][curr.x - 1], map[curr.y - 1][curr.x + 1]];
+    if(x > 0){
+        adj.push(map[y][x-1])
     }
-    else if(!map[curr.y-1]){
-        adj = [map[curr.y][curr.x + 1], map[curr.y][curr.x - 1], map[curr.y + 1][curr.x],
-               map[curr.y + 1][curr.x + 1], map[curr.y + 1][curr.x -1]];
+    if(x < x_length){
+        adj.push(map[y][x+1])
     }
-    else{
-        adj = [map[curr.y][curr.x + 1], map[curr.y][curr.x - 1], map[curr.y + 1][curr.x], map[curr.y - 1][curr.x],
-               map[curr.y + 1][curr.x + 1], map[curr.y - 1][curr.x - 1], map[curr.y - 1][curr.x + 1], map[curr.y + 1][curr.x -1]];
-    }
+
     // All adjacent nodes that are open
     let openAdj = [];
 
-    for(let i = 0; i < adj.length; ++i){
+    for(let i = 0; i < adj.length; i+=1){
         if(adj[i] && !adj[i].closed){
             openAdj.push(adj[i])
         }
     }
     return openAdj
+};
+
+movement.condense_path = (speed, path) => {
+    let step_start = 0;
+    let i = 0;
+    let condensed_path = [];
+
+    if(!path){
+        return [];
+    }
+
+    while(step_start < path.length -1){
+        // Loop while the bot can reach that square
+        for(i = step_start + 1; utilities.getDistance(path[step_start], path[i]) < speed; i += 1){}
+
+        if(i == path.length-1 && utilities.getDistance(path[step_start], path[i]) < speed){
+            condensed_path.push(path[i])
+            step_start = i;
+        }
+        else{
+            condensed_path.push(path[i-1]);
+            step_start = i-1;
+        }
+
+    }
+
+    return condensed_path;
 };
 
 
