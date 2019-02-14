@@ -35,9 +35,17 @@ utilities.enemiesInRange = (self) => {
 	return enemies;
 };
 
-utilities.getDistance = (start, end) => {
+utilities.getManhattanDistance = (start, end) => {
     //get the manhattan distance
     return (Math.abs(start.x - end.x) + Math.abs(start.y - end.y))
+};
+
+utilities.getDistance = (start, end) => {
+    if(start && end) {
+        // distance = sqrt((x2 - x1)^2 + (y2 - y1)^2)
+        // Strip out sq root because battle code specs give us the movement distance squared
+        return (Math.pow((end.x - start.x), 2)) + (Math.pow((end.y - start.y), 2))
+    }
 };
 
 // Returns true if loc2 is the same or one of the eight adjacent cells to loc1

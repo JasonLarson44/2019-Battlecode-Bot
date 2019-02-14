@@ -85,20 +85,20 @@ movement.aStar = (self, start, dest, theMap) => {
 
         for(let i = 0; i < adjacent.length; i+=1){
             neighbor = adjacent[i];
-            gScore = curr.g + utilities.getDistance(curr, neighbor);
+            gScore = curr.g + utilities.getManhattanDistance(curr, neighbor);
 
             if(!neighbor.seen){
                 neighbor.seen = true;
                 openList.push(neighbor);
                 neighbor.parent = curr;
                 neighbor.g = gScore;
-                neighbor.h = utilities.getDistance(curr, goal);
+                neighbor.h = utilities.getManhattanDistance(curr, goal);
                 neighbor.f = neighbor.g + neighbor.h
             }
             else if(gScore < neighbor.g){
                 neighbor.parent = curr;
                 neighbor.g = gScore;
-                neighbor.h = utilities.getDistance(curr, goal);
+                neighbor.h = utilities.getManhattanDistance(curr, goal);
                 neighbor.f = neighbor.g + neighbor.h
             }
 
@@ -195,9 +195,9 @@ movement.condense_path = (speed, path) => {
 
     while(step_start < path.length -1){
         // Loop while the bot can reach that square
-        for(i = step_start + 1; movement.get_dist(path[step_start], path[i]) < speed; i += 1){}
+        for(i = step_start + 1; utilities.getDistance(path[step_start], path[i]) < speed; i += 1){}
 
-        if(i == path.length-1 && movement.get_dist(path[step_start], path[i]) < speed){
+        if(i == path.length-1 && utilities.getDistance(path[step_start], path[i]) < speed){
             condensed_path.push(path[i])
             step_start = i;
         }
@@ -211,12 +211,5 @@ movement.condense_path = (speed, path) => {
     return condensed_path;
 };
 
-movement.get_dist = (start, end) => {
-    if(start && end) {
-        // distance = sqrt((x2 - x1)^2 + (y2 - y1)^2)
-        // Strip out sq root because battle code specs give us the movement distance squared
-        return (Math.pow((end.x - start.x), 2)) + (Math.pow((end.y - start.y), 2))
-    }
-};
 
 export default movement;
