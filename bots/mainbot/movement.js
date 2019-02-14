@@ -10,10 +10,7 @@ movement.moveTo = (self, x, y) => {
     }
     let path = movement.aStar(self, [self.me.y, self.me.x], [y, x], self.map);
     let condensed = movement.condense_path(SPECS['UNITS'][self.me.unit]['SPEED'], path)
-    self.log("Condensed path");
-    for(let i = 0; i < condensed.length; ++i){
-        self.log("x: " + condensed[i].x + ", y: " + condensed[i].y);
-    }
+    return condensed
 
 };
 
@@ -23,6 +20,9 @@ movement.aStar = (self, start, dest, theMap) => {
     let openList = [];
     // The map
     let map = [];
+
+    //  Get all visible bots
+    let visibleBots = self.getVisibleRobots()
 
     // Used to hold nodes adjacent to curr
     let adjacent = [];
@@ -35,9 +35,9 @@ movement.aStar = (self, start, dest, theMap) => {
     let gScore = 0;
 
     // Set up the map. If map[x][y] is false then it is impassable
-    for (let y = 0; y < theMap.length; ++y) {
+    for (let y = 0; y < theMap.length; y+=1) {
         map[y] = [];
-        for (let x = 0; x < theMap[y].length; ++x) {
+        for (let x = 0; x < theMap[y].length; x+=1) {
             map[y][x] =
                 { g:0,
                   h:0,
@@ -54,6 +54,11 @@ movement.aStar = (self, start, dest, theMap) => {
             }
         }
     }
+
+    for(let i = 0; i < visibleBots.length; i+=1){
+        map[visibleBots[i].y][visibleBots[i].x].closed = true;
+    }
+    //map[self.y][self.x].closed = false;
 
     let goal = map[dest[0]][dest[1]];
 
@@ -78,7 +83,7 @@ movement.aStar = (self, start, dest, theMap) => {
 
         adjacent = movement.getOpenAdj(map, curr);
 
-        for(let i = 0; i < adjacent.length; ++i){
+        for(let i = 0; i < adjacent.length; i+=1){
             neighbor = adjacent[i];
             gScore = curr.g + utilities.getDistance(curr, neighbor);
 
@@ -120,7 +125,7 @@ movement.selectNext = (openList) => {
     let min = openList[0].f;
     let minInd = 0;
 
-    for (let i=1; i < openList.length; ++i){
+    for (let i=1; i < openList.length; i+=1){
         if (openList[i].f < min){
             minInd = i
         }
@@ -171,7 +176,7 @@ movement.getOpenAdj = (map, curr) => {
     // All adjacent nodes that are open
     let openAdj = [];
 
-    for(let i = 0; i < adj.length; ++i){
+    for(let i = 0; i < adj.length; i+=1){
         if(adj[i] && !adj[i].closed){
             openAdj.push(adj[i])
         }
@@ -190,10 +195,16 @@ movement.condense_path = (speed, path) => {
 
     while(step_start < path.length -1){
         // Loop while the bot can reach that square
-        for(i = step_start + 1; movement.get_dist(path[step_start], path[i]) < speed; ++i){}
+        for(i = step_start + 1; movement.get_dist(path[step_start], path[i]) < speed; i += 1){}
 
-        condensed_path.push(path[i]);
-        step_start = i;
+        if(i == path.length-1 && movement.get_dist(path[step_start], path[i]) < speed){
+            condensed_path.push(path[i])
+            step_start = i;
+        }
+        else{
+            condensed_path.push(path[i-1]);
+            step_start = i-1;
+        }
 
     }
 
@@ -204,7 +215,7 @@ movement.get_dist = (start, end) => {
     if(start && end) {
         // distance = sqrt((x2 - x1)^2 + (y2 - y1)^2)
         // Strip out sq root because battle code specs give us the movement distance squared
-        return (Math.pow(end.x - start.x, 2)) + (Math.pow(end.y - start.y, 2))
+        return (Math.pow((end.x - start.x), 2)) + (Math.pow((end.y - start.y), 2))
     }
 };
 
