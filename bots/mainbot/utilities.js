@@ -38,12 +38,15 @@ utilities.enemiesInRange = (self) => {
 utilities.getManhattanDistance = (start, end) => {
     //get the manhattan distance
     return (Math.abs(start.x - end.x) + Math.abs(start.y - end.y))
+};
 
 // Returns the SQUARE of the distance between start and end.
 // Saves the expensive computation of a square root, and since the square root
 // operation is monotonic, you can still accurately compare distances
 utilities.getDistance = (start, end) => {
+	if(start && end){
     return Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2)
+	}
 
 };
 
