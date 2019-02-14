@@ -10,7 +10,6 @@ pilgrim.mission = undefined;// Current mission to fulfill
 pilgrim.target = undefined;	// Location of resource we are mining
 pilgrim.home = undefined;	// Location of originating castle
 pilgrim.blacklist = [];		// List of resource locations to ignore
-
 	
 // Find the closest resource deposit that has not been blacklisted to my 
 // current location
@@ -20,11 +19,12 @@ pilgrim.blacklist = [];		// List of resource locations to ignore
 // Returns: Object with x and y properties specifying the coordinates of the
 // closest resource deposit
 pilgrim.findClosestResource = (self, map, blacklist=[]) => {
-	var closestLocation = undefined;
+  var closestLocation = undefined;
 	var closestDistance = Infinity;
 	
 	var i, j;
-	for (i = 0; i < map.length; i++) {
+
+  for (i = 0; i < map.length; i++) {
 		for (j = 0; j < map[i].length; j++) {
 			if (map[i][j]) {
 				var distance = Math.pow(self.me.x - j, 2) + Math.pow(self.me.y - i, 2);
@@ -42,7 +42,7 @@ pilgrim.findClosestResource = (self, map, blacklist=[]) => {
 					if (!blacklisted) {
 						closestDistance = distance;
 						closestLocation = {x: j, y: i};
-					}					
+					}	
 				}
 			}
 		}
@@ -90,6 +90,7 @@ pilgrim.takeTurn = (self) => {
 				if (self.me.fuel < SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY && 
 					self.me.karbonite < SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
 					utilities.log(self, `Mining ${pilgrim.mission} at (${self.me.x}, ${self.me.y}) (Current: ${Math.max(self.me.fuel, self.me.karbonite)})`);
+
 					return self.mine();
 
 				// Reached maximum capacity, return to home castle
@@ -119,6 +120,7 @@ pilgrim.takeTurn = (self) => {
 		case 'return':
 			// Adjacent to castle. Deposit resources
 			if (utilities.isAdjacent(self.me, pilgrim.home)) {
+
 				pilgrim.mission = undefined;
 				utilities.log(self, `Giving ${self.me.karbonite} karbonite to castle at (${pilgrim.home.x}, ${pilgrim.home.y}), delta (${self.me.x - pilgrim.home.x}, ${self.me.y - pilgrim.home.y})`)
 				return self.give(pilgrim.home.x - self.me.x, pilgrim.home.y - self.me.y, self.me.karbonite, self.me.fuel);
