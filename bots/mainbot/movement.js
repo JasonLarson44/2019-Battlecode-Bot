@@ -9,7 +9,12 @@ movement.moveTo = (self, x, y) => {
         return [];
     }
     let path = movement.aStar(self, [self.me.y, self.me.x], [y, x], self.map);
-    return path
+    let condensed = movement.condense_path(SPECS['UNITS'][self.me.unit]['SPEED'], path)
+    self.log("Condensed path");
+    for(let i = 0; i < condensed.length; ++i){
+        self.log("x: " + condensed[i].x + ", y: " + condensed[i].y);
+    }
+
 };
 
 
@@ -124,29 +129,45 @@ movement.selectNext = (openList) => {
 };
 
 movement.getOpenAdj = (map, curr) => {
+    if(!map || !curr || !map[curr.y] || !map[0][curr.x]){
+        return [];
+    }
 
-    // All adjacent nodes
-    let adj;
-    if(!map[0][curr.x+1]){
-        adj = [map[curr.y][curr.x - 1], map[curr.y + 1][curr.x], map[curr.y - 1][curr.x],
-               map[curr.y - 1][curr.x - 1], map[curr.y + 1][curr.x -1]];
+    let y = curr.y;
+    let x = curr.x;
+    let y_length = map.length -1;
+    let x_length = map[0].length -1;
+
+    let adj = [];
+
+    if(y < y_length){
+        adj.push(map[y+1][x]);
+        // If in x bounds
+        if(x < x_length){
+            adj.push(map[y+1][x+1])
+        }
+        if(x > 0){
+            adj.push(map[y+1][x-1])
+        }
     }
-    else if(!map[0][curr.x-1]){
-        adj = [map[curr.y][curr.x + 1], map[curr.y + 1][curr.x], map[curr.y - 1][curr.x],
-               map[curr.y + 1][curr.x + 1], map[curr.y - 1][curr.x + 1]];
+    if(y > 0){
+        adj.push(map[y-1][x]);
+        if(x < x_length){
+            adj.push(map[y-1][x+1])
+        }
+        if(x > 0){
+            adj.push(map[y-1][x-1])
+        }
+
+
     }
-    else if(!map[curr.y+1]){
-        adj = [map[curr.y][curr.x + 1], map[curr.y][curr.x - 1], map[curr.y - 1][curr.x],
-               map[curr.y - 1][curr.x - 1], map[curr.y - 1][curr.x + 1]];
+    if(x > 0){
+        adj.push(map[y][x-1])
     }
-    else if(!map[curr.y-1]){
-        adj = [map[curr.y][curr.x + 1], map[curr.y][curr.x - 1], map[curr.y + 1][curr.x],
-               map[curr.y + 1][curr.x + 1], map[curr.y + 1][curr.x -1]];
+    if(x < x_length){
+        adj.push(map[y][x+1])
     }
-    else{
-        adj = [map[curr.y][curr.x + 1], map[curr.y][curr.x - 1], map[curr.y + 1][curr.x], map[curr.y - 1][curr.x],
-               map[curr.y + 1][curr.x + 1], map[curr.y - 1][curr.x - 1], map[curr.y - 1][curr.x + 1], map[curr.y + 1][curr.x -1]];
-    }
+
     // All adjacent nodes that are open
     let openAdj = [];
 
@@ -158,5 +179,33 @@ movement.getOpenAdj = (map, curr) => {
     return openAdj
 };
 
+movement.condense_path = (speed, path) => {
+    let step_start = 0;
+    let i = 0;
+    let condensed_path = [];
+
+    if(!path){
+        return [];
+    }
+
+    while(step_start < path.length -1){
+        // Loop while the bot can reach that square
+        for(i = step_start + 1; movement.get_dist(path[step_start], path[i]) < speed; ++i){}
+
+        condensed_path.push(path[i]);
+        step_start = i;
+
+    }
+
+    return condensed_path;
+};
+
+movement.get_dist = (start, end) => {
+    if(start && end) {
+        // distance = sqrt((x2 - x1)^2 + (y2 - y1)^2)
+        // Strip out sq root because battle code specs give us the movement distance squared
+        return (Math.pow(end.x - start.x, 2)) + (Math.pow(end.y - start.y, 2))
+    }
+};
 
 export default movement;
