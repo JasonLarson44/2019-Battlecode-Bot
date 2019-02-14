@@ -1,0 +1,28 @@
+{
+  "name": "2019-battlecode-bot",
+  "version": "1.0.0",
+  "description": "PSU Class Group 3 entry to the 2019 MIT Battlecode competition",
+  "main": "bots/mainbot/robot.js",
+  "dependencies": {
+    "rewire": "^4.0.1"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0",
+    "nyc": "^13.2.0"
+  },
+  "scripts": {
+    "pretest": "bc19compile -f -d bots/mainbot/ -o test_compiled_bot.js",
+    "test": "nyc --reporter=text mocha",
+    "posttest": "rm test_compiled_bot.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JasonLarson44/2019-Battlecode-Bot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JasonLarson44/2019-Battlecode-Bot/issues"
+  },
+  "homepage": "https://github.com/JasonLarson44/2019-Battlecode-Bot#readme"
+}

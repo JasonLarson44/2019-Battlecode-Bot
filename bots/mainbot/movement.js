@@ -6,6 +6,7 @@ const movement = {};
 
 movement.moveTo = (self, x, y) => {
     if(!self.map[x] || !self.map[0][y]){
+        utilities.log(self, "Movement error! Failed initial map check");
         return [];
     }
     let path = movement.aStar(self, [self.me.y, self.me.x], [y, x], self.map);

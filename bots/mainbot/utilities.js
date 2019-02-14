@@ -38,14 +38,13 @@ utilities.enemiesInRange = (self) => {
 utilities.getManhattanDistance = (start, end) => {
     //get the manhattan distance
     return (Math.abs(start.x - end.x) + Math.abs(start.y - end.y))
-};
 
+// Returns the SQUARE of the distance between start and end.
+// Saves the expensive computation of a square root, and since the square root
+// operation is monotonic, you can still accurately compare distances
 utilities.getDistance = (start, end) => {
-    if(start && end) {
-        // distance = sqrt((x2 - x1)^2 + (y2 - y1)^2)
-        // Strip out sq root because battle code specs give us the movement distance squared
-        return (Math.pow((end.x - start.x), 2)) + (Math.pow((end.y - start.y), 2))
-    }
+    return Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2)
+
 };
 
 // Returns true if loc2 is the same or one of the eight adjacent cells to loc1
