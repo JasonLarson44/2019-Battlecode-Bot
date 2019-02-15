@@ -106,7 +106,8 @@ movement.aStar = (self, start, dest, theMap) => {
         }
 
     }
-
+    utilities.log(self, "Failed to find a path to target, returning empty list");
+    return [];
 };
 
 movement.retracePath = (self, start, goal) => {
