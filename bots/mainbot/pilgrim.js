@@ -9,6 +9,7 @@ const pilgrim = {};
 pilgrim.mission = undefined;// Current mission to fulfill
 pilgrim.target = undefined;	// Location of resource we are mining
 pilgrim.home = undefined;	// Location of originating castle
+pilgrim.path = undefined; // Path to follow to reach target
 pilgrim.blacklist = [];		// List of resource locations to ignore
 	
 // Find the closest resource deposit that has not been blacklisted to my 
@@ -70,6 +71,7 @@ pilgrim.takeTurn = (self) => {
 		}
 	}
 
+	// Choose a mission if one already isn't selected
 	if (pilgrim.mission === undefined) {
 		if (self.karbonite < 500) {
 			pilgrim.mission = 'karbonite'
@@ -81,6 +83,8 @@ pilgrim.takeTurn = (self) => {
 		utilities.log(self, `Pilgrim on ${pilgrim.mission} mission at (${pilgrim.target.x}, ${pilgrim.target.y})`)
 	}
 
+	// Execute current mission
+	// TODO: break out into functions
 	switch (pilgrim.mission) {
 		case 'karbonite':
 		case 'fuel':
@@ -97,7 +101,8 @@ pilgrim.takeTurn = (self) => {
 				} else {
 					utilities.log(self, `Max ${pilgrim.mission} capacity reached. Returning home.`);
 					pilgrim.mission = 'return';
-					pilgrim.move(self, pilgrim.home);
+					pilgrim.path = undefined;
+					return pilgrim.takeTurn(self);
 				}
 
 			// Move toward the targeted resource deposit
@@ -108,6 +113,7 @@ pilgrim.takeTurn = (self) => {
 					utilities.log(self, `Resource at (${pilgrim.target.x}, ${pilgrim.target.y}) occupied!`)
 					pilgrim.blacklist.push(pilgrim.target);
 					pilgrim.mission = undefined;
+					pilgrim.path = undefined;
 					return pilgrim.takeTurn(self);
 				} else {
 					utilities.log(self, `Target: (${pilgrim.target.x}, ${pilgrim.target.y})    Location: ${[self.me.x, self.me.y]}`)
@@ -122,59 +128,85 @@ pilgrim.takeTurn = (self) => {
 			if (utilities.isAdjacent(self.me, pilgrim.home)) {
 
 				pilgrim.mission = undefined;
+				pilgrim.path = undefined;
 				utilities.log(self, `Giving ${self.me.karbonite} karbonite to castle at (${pilgrim.home.x}, ${pilgrim.home.y}), delta (${self.me.x - pilgrim.home.x}, ${self.me.y - pilgrim.home.y})`)
 				return self.give(pilgrim.home.x - self.me.x, pilgrim.home.y - self.me.y, self.me.karbonite, self.me.fuel);
 
 			// Move toward home castle
 			} else {
-				utilities.log(self, `Moving from (${self.me.x}, ${self.me.y}) toward home at (${pilgrim.home.x}, ${pilgrim.home.y}) - adjacent? ${utilities.isAdjacent(self.me, pilgrim.home)}`);
-				return pilgrim.move(self, pilgrim.home);
+				let t = {x: pilgrim.home.x + 1, y: pilgrim.home.y}
+				utilities.log(self, `Moving from (${self.me.x}, ${self.me.y}) toward home at (${t.x}, ${t.y}) - adjacent? ${utilities.isAdjacent(self.me, pilgrim.home)}`);
+				// utilities.log(self, `Moving from (${self.me.x}, ${self.me.y}) toward home at (${pilgrim.home.x}, ${pilgrim.home.y}) - adjacent? ${utilities.isAdjacent(self.me, pilgrim.home)}`);
+				// return pilgrim.move(self, pilgrim.home);
+				return pilgrim.move(self, t);
 			}
 	}
 }
 
 // Move toward a target.
 pilgrim.move = (self, target) => {
-	let path = undefined;
-
-	try {
-		utilities.log(self, `Target: (${target.x}, ${target.y})`);
-		path = movement.moveTo(self, target.x, target.y);
-		utilities.log(self, `Path length: ${path.length}`);
-	} catch(e) {
-		utilities.log(self, "Path-finding algorithm raised an exception! Reverting to random movement.");
-		return pilgrim.random_move(self);
-	}
-	let i = 0;
-
-	while (i < path.length && !utilities.isOpen(self, path[i])) {
-		utilities.log(self, `Step ${i}: (${path[i].x}, ${path[i].y})`)
-		i++;
+	if (!pilgrim.path) {
+		try {
+			utilities.log(self, `Calculating path to: (${target.x}, ${target.y})`);
+			pilgrim.path = movement.moveTo(self, target.x, target.y);
+			utilities.log(self, `Path length: ${	pilgrim.path.length}`);
+		} catch(e) {
+			utilities.log(self, "Movement exception: " + e);
+			utilities.log(self, "Path-finding algorithm raised an exception! Reverting to random movement.");
+			return pilgrim.random_move(self);
+		}
 	}
 
-	if (i >= path.length) {
-		utilities.log(self, "Failed to find a path! Reverting to random movement.");
-		return pilgrim.random_move(self);
+	// Path returned is empty
+	if (pilgrim.path.length === 0) {
+		if (utilities.inMovementRange(self, target)) {
+			// Target in movement range, so we can move one square towards target
+			let dx = target.x - self.x;
+			let dy = target.y - self.y;
+			let step = {x: self.x, y: self.y};
+
+			if (dx > 0) {
+				step.x = 1
+			} else if (dx < 0) {
+				step.dx = -1;
+			}
+
+			if (dy > 0) {
+				step.y = 1;
+			} else if (dy < 0) {
+				step.y = -1;
+			}
+
+			pilgrim.path = [step];
+			utilities.log("Closing in on target. Moving one tile toward target.");
+
+		} else {
+			// No valid path to target
+			utilities.log(self, "Failed to find a path! Reverting to random movement.");
+			return pilgrim.random_move(self);
+		}
 	}
 
-	utilities.log(self, "Distance to step: " + utilities.getDistance(self.me, path[i]));
-	utilities.log(self, "Max speed: " + SPECS.UNITS[SPECS.PILGRIM].SPEED);
-	if (utilities.getDistance(self.me, path[i]) > SPECS.UNITS[SPECS.PILGRIM].SPEED) {
+	let step = pilgrim.path.shift();
+
+	utilities.log(self, `Stepping to: (${step.x}, ${step.y})`)
+	utilities.log(self, "Distance to step: " + utilities.getDistance(self.me, step));
+	if (utilities.getDistance(self.me, step) > SPECS.UNITS[SPECS.PILGRIM].SPEED) {
 		utilities.log(self, "Distance to far! Reverting to random movement.");
 		return pilgrim.random_move(self);
 	}
-
-	let step = path[i];
 
 	utilities.log(self, `step: (${step.x}, ${step.y})`);
 	let dx = step.x - self.me.x;
 	let dy = step.y - self.me.y;
 
 	utilities.log(self, "Moving from (" + self.me.x + ", " + self.me.y + ") stepping (" + dx + ", " + dy + ") toward (" + target.x + ", " + target.y + ")");
-	if (utilities.isOpen(self, {x: self.me.x + dx, y: self.me.y + dy})) {
+	if (utilities.isOpen(self, {x: step.x, y: step.y})) {
 		return self.move(dx, dy);
 	} else {
-		utilities.log(self, "Path occupied.");
+		// Path occupied. Recalculate path
+		utilities.log(self, "Path occupied. Recalculating path.");
+		return pilgrim.move(self, target);
 	}
 }
 

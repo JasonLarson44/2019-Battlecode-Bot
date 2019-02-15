@@ -37,22 +37,26 @@ utilities.enemiesInRange = (self) => {
 
 utilities.getManhattanDistance = (start, end) => {
     //get the manhattan distance
-    return (Math.abs(start.x - end.x) + Math.abs(start.y - end.y))
+    return (Math.abs(start.x - end.x) + Math.abs(start.y - end.y));
 };
 
 // Returns the SQUARE of the distance between start and end.
 // Saves the expensive computation of a square root, and since the square root
 // operation is monotonic, you can still accurately compare distances
 utilities.getDistance = (start, end) => {
-	if(start && end){
-    return Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2)
+	if(start && end) {
+    	return Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2);
 	}
-
 };
 
 // Returns true if loc2 is the same or one of the eight adjacent cells to loc1
 utilities.isAdjacent = (loc1, loc2) => {
-	return Math.abs(loc1.x - loc2.x) <= 1 && Math.abs(loc1.y - loc2.y) <= 1
+	return Math.abs(loc1.x - loc2.x) <= 1 && Math.abs(loc1.y - loc2.y) <= 1;
+}
+
+// Returns true if loc can be moved to this turn
+utilities.inMovementRange = (self, loc) => {
+	return utilities.getDistance(self, loc) <= SPECS.UNITS[self.me.unit].SPEED;
 }
 
 export default utilities;
