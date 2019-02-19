@@ -107,8 +107,7 @@ pilgrim.takeTurn = (self) => {
 
 			// Move toward the targeted resource deposit
 			} else {
-				if (utilities.isAdjacent(self.me, pilgrim.target) &&
-				    !utilities.isOpen(self, pilgrim.target)) {
+				if (!utilities.isOpen(self, pilgrim.target)) {
 					// Resource occupied. Blacklist it and try another one.
 					utilities.log(self, `Resource at (${pilgrim.target.x}, ${pilgrim.target.y}) occupied!`)
 					pilgrim.blacklist.push(pilgrim.target);
@@ -183,6 +182,7 @@ pilgrim.move = (self, target) => {
 		} else {
 			// No valid path to target
 			utilities.log(self, "Failed to find a path! Reverting to random movement.");
+			pilgrim.path = undefined;
 			return pilgrim.random_move(self);
 		}
 	}
@@ -206,6 +206,7 @@ pilgrim.move = (self, target) => {
 	} else {
 		// Path occupied. Recalculate path
 		utilities.log(self, "Path occupied. Recalculating path.");
+		pilgrim.path = undefined;
 		return pilgrim.move(self, target);
 	}
 }
@@ -214,6 +215,8 @@ pilgrim.move = (self, target) => {
 // the robot's current location. Will not do anything if the location the robot
 // wants to move to is impassable or occupied.
 pilgrim.random_move = (self) => {
+	pilgrim.path = undefined;
+
 	let dx = Math.floor(Math.random() * 3) - 1;
 	let dy = Math.floor(Math.random() * 3) - 1;
 
