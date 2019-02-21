@@ -66,6 +66,9 @@ pilgrim.findClosestResource = (self, map, blacklist=[]) => {
 }
 
 pilgrim.takeTurn = (self) => {
+	// Let castle know we're still alive
+	self.castleTalk(0xFF);
+
 	// Record location of castle to give collected resources to
 	if (pilgrim.home === undefined) {
 		for (var robot of self.getVisibleRobots()) {
