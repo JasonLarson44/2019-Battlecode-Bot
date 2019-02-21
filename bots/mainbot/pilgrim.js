@@ -7,12 +7,12 @@ import movement from './movement.js'
 const pilgrim = {};
 
 pilgrim.mission = undefined;// Current mission to fulfill
-pilgrim.target = undefined;	// Location of resource we are mining
-pilgrim.home = undefined;	// Location of originating castle
-pilgrim.path = undefined; // Path to follow to reach target
-pilgrim.blacklist = [];		// List of resource locations to ignore
+pilgrim.target = undefined; // Location of resource we are mining
+pilgrim.home = undefined;   // Location of originating castle
+pilgrim.path = undefined;   // Path to follow to reach target
+pilgrim.blacklist = [];     // List of resource locations to ignore
 
-const MAX_TRAVEL = 16;
+const MAX_TRAVEL = 16; // Maximum (squared) distance to travel to a church or castle
 const dirs = [
     { x: 0, y: -1 },
     { x: 1, y: -1 },
