@@ -5,11 +5,13 @@ import utilities from "./utilities.js";
 const movement = {};
 
 movement.moveTo = (self, x, y) => {
-    if(!self.map[x] || !self.map[0][y]){
+    if(self.map[y] === undefined || self.map[y][x] === undefined){
         utilities.log(self, "Movement error! Failed initial map check");
         return [];
     }
     let path = movement.aStar(self, [self.me.y, self.me.x], [y, x], self.map);
+    if (path === undefined)
+        utilities.log(self, "MOVEMENT FAILED: movement.aStar returned undefined path.");
     let condensed = movement.condense_path(SPECS['UNITS'][self.me.unit]['SPEED'], path)
     return condensed
 

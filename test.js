@@ -3,6 +3,7 @@ const rewire = require('rewire');
 
 const bot = rewire('./test_compiled_bot.js');
 let utilities = bot.__get__("utilities");
+let SPECS = bot.__get__("SPECS")
 
 describe("utilities", function() {
   describe("#getDistance()", function() {
@@ -43,6 +44,30 @@ describe("utilities", function() {
       assert.equal(utilities.isOpen(state, {x:1,y:1}), false, "No wall and robot");
       assert.equal(utilities.isOpen(state, {x:2,y:1}), false, "Wall and no visibility");
       assert.equal(utilities.isOpen(state, {x:2,y:2}), true, "No wall and no visibility");
+    });
+  });
+  
+  describe("#inMovementRange()", function() {
+    it("Pilgrim tests", function() {
+      let state = {
+        x: 5,
+        y: 5,
+        me: {
+          unit: SPECS.PILGRIM,
+        }
+      };
+
+      // These should be true
+      assert(utilities.inMovementRange(state, {x:5, y:5}), "False for same location");
+      assert(utilities.inMovementRange(state, {x:5, y:6}), "False for down");
+      assert(utilities.inMovementRange(state, {x:6, y:6}), "False for bottom right");
+      assert(utilities.inMovementRange(state, {x:3, y:5}), "False for far left");
+      assert(utilities.inMovementRange(state, {x:5, y:7}), "False for far bottom");
+
+      // These should be false
+      assert(!utilities.inMovementRange(state, {x:8, y:5}), "True for 3 to the right");
+      assert(!utilities.inMovementRange(state, {x:5, y:2}), "True for 3 up");
+      assert(!utilities.inMovementRange(state, {x:3, y:4}), "True for left-up diag");
     });
   });
 });
