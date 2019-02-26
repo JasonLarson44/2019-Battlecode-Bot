@@ -9,6 +9,12 @@ The files are separated out by robot type. For example, castles, crusaders and p
 The logic for what a crusader should do on its turn will be in the crusader.js file.
 The robot.js file will exist to determine which type of robot is taking a turn and pass control to that file.
 
+## Installing
+Run `sudo npm install` to install the dependencies for this project.
+
+## Running
+To run the bot against a dummy player, use `bc19run -r mainbot/ -b easybot/`. 
+
 ## Testing
 To run the builtin tests and code coverage reports for this project, use the
 `npm test` command. This will compile the bot, run the tests with mocha, and
