@@ -27,8 +27,10 @@ utilities.enemiesInRange = (self) => {
 	let maxRange = botSpec['ATTACK_RADIUS'][1];
 	let myTeam = self.me.team;
 	let robotsInVision = self.getVisibleRobots();
+	let dist;
 	for(let i = 0; i < robotsInVision.length; ++i){
-		if(robotsInVision[i].team !== myTeam && Math.pow(utilities.getDistance(self.me, robotsInVision[i]), 2) < maxRange){
+		dist = utilities.getDistance(self.me, robotsInVision[i]);
+		if(robotsInVision[i].team !== myTeam && dist < maxRange && dist >= minRange){
 			enemies.push(robotsInVision[i])
 		}
 	}
