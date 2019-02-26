@@ -7,25 +7,37 @@ import combat from './combat.js'
 
 const castle = {};
 const pilgrims ={};
+const crusaders = {};
 
 
 pilgrims.number = 0;
+crusaders.count = 0;
 
 var first_castle = true ;
 var castle_locs = [];
 
 
 castle.takeTurn = (self) => {
-	self.log('castle taking turn')
-	
+    self.log('castle taking turn')
+	//const visible = self.getVisibleRobots();
+	//self.log('the visbile robots are:' + visible) ;
+
+	if(crusaders.count < 5){
+		self.signal = 0;
+		utilities.log(self, "Castle setting build phase")
+	}
+	else{
+		self.signal = 1;
+        utilities.log(self, "Castle setting attack phase")
+	}
 	var robotsnearme = self.getVisibleRobots();
 
 	var getBuildDir = function(buildunit) {
         var options = nav.rotate_arr.filter((d) => {
             return nav.isPassable(nav.applyDir(self.me, d), self.getPassableMap(), self.getVisibleRobotMap())
-        })
+        });
         return options[0];
-	}
+	};
 
 	var attackable = robotsnearme.filter((r) => {
         if (! self.isVisible(r)){
