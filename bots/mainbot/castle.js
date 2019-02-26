@@ -7,11 +7,9 @@ import combat from './combat.js'
 
 const castle = {};
 const pilgrims ={};
-const crusaders = {};
 
 
 pilgrims.number = 0;
-crusaders.count = 0;
 
 var first_castle = true ;
 var castle_locs = [];
@@ -19,17 +17,17 @@ var castle_locs = [];
 
 castle.takeTurn = (self) => {
     self.log('castle taking turn')
-	//const visible = self.getVisibleRobots();
+	const visible = self.getVisibleRobots();
 	//self.log('the visbile robots are:' + visible) ;
+    castle.countUnits(self, visible);
 
-	if(crusaders.count < 5){
-		self.signal = 0;
-		utilities.log(self, "Castle setting build phase")
-	}
-	else{
-		self.signal = 1;
+    utilities.log(self, `Current unit counts: Castles: ${self.castle_count}, Crusaders: ${self.crusader_count}, Prophets: ${self.prophet_count}, Pilgrims: ${self.pilgrim_count}`)
+
+	if(self.prophet_count >= 5){
+        self.signal(0x01, 5);
         utilities.log(self, "Castle setting attack phase")
 	}
+
 	var robotsnearme = self.getVisibleRobots();
 
 	var getBuildDir = function(buildunit) {
@@ -51,7 +49,7 @@ castle.takeTurn = (self) => {
         }
         return false;
 	});
-	
+
 	if (attackable.length>0){
         // attack first robot
         var r = attackable[0];
@@ -81,7 +79,7 @@ castle.takeTurn = (self) => {
 				pilgrims.number++;
 				return self.buildUnit(SPECS.PILGRIM, d.x, d.y);
 			}
-		
+
 		}
 
 		if(self.me['turn'] == 2)
@@ -93,7 +91,7 @@ castle.takeTurn = (self) => {
 			{
 				if(robotsnear[i].castle_talk)
 				{
-					
+
 					castle_locs.push((robotsnear[i].castle_talk))
 					self.log('pushing castle locs')
 				}
@@ -103,7 +101,7 @@ castle.takeTurn = (self) => {
             	self.log('Building a crusader at ' + (self.me.x+1) + ',' + (self.me.y+1));
             	return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
         	}
-		
+
 		}
 
 		if(first_castle)
@@ -113,14 +111,9 @@ castle.takeTurn = (self) => {
 					self.log('Building a prophet at ' + (self.me.x+1) + ',' + (self.me.y+1));
 					 return self.buildUnit(SPECS.PROPHET, d.x, d.y);
 				}
-				var d = getBuildDir(self.me);
-				if (!(d === undefined)){
-					self.log('Building a prophet at ' + (self.me.x+1) + ',' + (self.me.y+1));
-					 return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
-				}
-		} 
-	
-	// this is just to checks the castle_locs	
+		}
+
+	// this is just to checks the castle_locs
 	if(self.me['turn'] == 3)
 	{
 		self.log(`castle_locs length:, ${castle_locs.length}`)
@@ -128,16 +121,16 @@ castle.takeTurn = (self) => {
 		for( i = 0 ; i < castle_locs.length ;i++)
 		{
 		//	utilities.log(self , `Castles recorder Location: ${[castle_locs[x], castle_locs[y]]}` )
-			self.log(`castle  recorded locations:' , ${castle_locs[i]}`)
+			self.log(`castle recorded locations:' , ${castle_locs[i]}`)
 		}
 				var d = getBuildDir(self.me);
 				if (!(d === undefined)){
 					self.log('Building a prophet at ' + (self.me.x+1) + ',' + (self.me.y+1));
 					 return self.buildUnit(SPECS.PROPHET, d.x, d.y);
-				}	
+				}
 	}
 
-	
+
 	if (pilgrims.number < 4 &&
 		self.fuel > SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_FUEL'] + 10
 	   && self.karbonite >= SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_KARBONITE'] )
@@ -148,8 +141,8 @@ castle.takeTurn = (self) => {
 		   pilgrims.number++;
 		   return self.buildUnit(SPECS.PILGRIM, d.x, d.y);
 		   }
-	   } 
-	   
+	   }
+
 	   if (self.me.turn > 10 && self.karbonite > 30 && self.fuel > 150 && Math.random() < .3333)
 	   {
 		   var d = getBuildDir(self.me);
@@ -159,7 +152,7 @@ castle.takeTurn = (self) => {
 		   return self.buildUnit(SPECS.PROPHET, d.x, d.y);
 		   }
 	   }
-	   
+
 	   if (self.me.turn > 10 && self.karbonite > 30 && self.fuel > 150 && Math.random() < .3333)
 	   {
 		   var d = getBuildDir(self.me);
@@ -167,8 +160,8 @@ castle.takeTurn = (self) => {
 			   self.log('Building a crusader at ' + (self.me.x+1) + ',' + (self.me.y+1));
 			   pilgrims.number++;
 			   return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
-			   }	
-	   }		
+			   }
+	   }
 
 	//var enemies = utilities.enemiesInRange(self);
 /*	if(enemies.length > 0){
@@ -180,6 +173,36 @@ castle.takeTurn = (self) => {
 		}
 //	} */
 
+};
+
+// Counts bots castle can see.
+castle.countUnits = (self, visibleBots) => {
+    let bot = undefined;
+    // Zero the counts
+    self.castle_count = 0;
+    self.crusader_count = 0;
+    self.pilgrim_count = 0;
+    self.prophet_count = 0;
+    for (let i = 0; i < visibleBots.length; ++i){
+        bot = visibleBots[i];
+        // utilities.log(self, `Bot at ${i} has unit ${bot.unit} and castleTalk ${bot.castleTalk}`);
+        switch (bot.unit) {
+        	case SPECS.CASTLE:
+				self.castle_count +=1;
+        		break;
+			case SPECS.CRUSADER:
+				self.crusader_count +=1;
+				break;
+			case SPECS.PILGRIM:
+				self.pilgrim_count +=1;
+				break;
+			case SPECS.PROPHET:
+				self.prophet_count +=1;
+				break;
+			default:
+				break;
+		}
+    }
 };
 
 export default castle;
