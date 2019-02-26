@@ -7,10 +7,22 @@ import movement from './movement.js'
 const pilgrim = {};
 
 pilgrim.mission = undefined;// Current mission to fulfill
-pilgrim.target = undefined;	// Location of resource we are mining
-pilgrim.home = undefined;	// Location of originating castle
-pilgrim.path = undefined; // Path to follow to reach target
-pilgrim.blacklist = [];		// List of resource locations to ignore
+pilgrim.target = undefined; // Location of resource we are mining
+pilgrim.home = undefined;   // Location of originating castle
+pilgrim.path = undefined;   // Path to follow to reach target
+pilgrim.blacklist = [];     // List of resource locations to ignore
+
+const MAX_TRAVEL = 16; // Maximum (squared) distance to travel to a church or castle
+const dirs = [
+    { x: 0, y: -1 },
+    { x: 1, y: -1 },
+    { x: -1, y: -1 },
+    { x: 1, y: 0 },
+    { x: -1, y: 0 },
+    { x: 0, y: 1 },
+    { x: 1, y: 1 },
+    { x: -1, y: 1 },
+];
 	
 // Find the closest resource deposit that has not been blacklisted to my 
 // current location
@@ -54,6 +66,9 @@ pilgrim.findClosestResource = (self, map, blacklist=[]) => {
 }
 
 pilgrim.takeTurn = (self) => {
+	// Let castle know we're still alive
+	self.castleTalk(0xFF);
+
 	// Record location of castle to give collected resources to
 	if (pilgrim.home === undefined) {
 		for (var robot of self.getVisibleRobots()) {
@@ -97,10 +112,33 @@ pilgrim.takeTurn = (self) => {
 
 					return self.mine();
 
-				// Reached maximum capacity, return to home castle
 				} else {
-					utilities.log(self, `Max ${pilgrim.mission} capacity reached. Returning home.`);
-					pilgrim.mission = 'return';
+					if (utilities.getDistance(self.me, pilgrim.home) > MAX_TRAVEL) {
+						// Search for a closer home (seed 1927125149)
+						utilities.log(self, "Searching for closer home");
+						for (let r of self.getVisibleRobots()) {
+							if ((r.unit === SPECS.CASTLE || r.unit === SPECS.CHURCH) && // Unit is a castle or church
+								r.team == self.me.team && // Unit is on my team
+							 	utilities.getDistance(self.me, r) <= MAX_TRAVEL) { // Unit is reasonably close
+
+								utilities.log(self, `Setting new pilgrim home at (${r.x}, ${r.y})`);
+								pilgrim.home = {x: r.x, y: r.y};
+								pilgrim.mission = 'return';
+								pilgrim.path = undefined;
+								return pilgrim.takeTurn(self);
+							}
+						}
+						
+						// No nearby church. Build one
+						utilities.log(self, `Building a church nearby`);
+						pilgrim.mission = 'build';
+					
+					} else {
+						// Reached maximum capacity, return to home castle
+						utilities.log(self, `Max ${pilgrim.mission} capacity reached. Returning home.`);
+						pilgrim.mission = 'return';
+					}
+
 					pilgrim.path = undefined;
 					return pilgrim.takeTurn(self);
 				}
@@ -119,7 +157,6 @@ pilgrim.takeTurn = (self) => {
 					return pilgrim.move(self, pilgrim.target);
 				}
 			}
-			break;
 
 		// Return to home castle to deposit mined resources
 		case 'return':
@@ -133,18 +170,44 @@ pilgrim.takeTurn = (self) => {
 
 			// Move toward home castle
 			} else {
-				let t = {x: pilgrim.home.x + 1, y: pilgrim.home.y}
-				utilities.log(self, `Moving from (${self.me.x}, ${self.me.y}) toward home at (${t.x}, ${t.y}) - adjacent? ${utilities.isAdjacent(self.me, pilgrim.home)}`);
-				// utilities.log(self, `Moving from (${self.me.x}, ${self.me.y}) toward home at (${pilgrim.home.x}, ${pilgrim.home.y}) - adjacent? ${utilities.isAdjacent(self.me, pilgrim.home)}`);
-				// return pilgrim.move(self, pilgrim.home);
-				return pilgrim.move(self, t);
+				for (let dir of dirs) {
+					let t = {x: pilgrim.home.x + dir.x, y: pilgrim.home.y + dir.y};
+					if (utilities.isOpen(self, t)) {
+						utilities.log(self, `Moving from (${self.me.x}, ${self.me.y}) toward home at (${t.x}, ${t.y}) - adjacent? ${utilities.isAdjacent(self.me, pilgrim.home)}`);
+						// utilities.log(self, `Moving from (${self.me.x}, ${self.me.y}) toward home at (${pilgrim.home.x}, ${pilgrim.home.y}) - adjacent? ${utilities.isAdjacent(self.me, pilgrim.home)}`);
+						// return pilgrim.move(self, pilgrim.home);
+						return pilgrim.move(self, t);
+					}
+				}
 			}
+
+		case 'build':
+			for (let dir of dirs) {
+				let coords = {x: self.me.x + dir.x, y: self.me.y + dir.y};
+				if (utilities.isOpen(self, coords) && // Space passable
+					!self.karbonite_map[coords.y][coords.x] && // No karbonite
+					!self.fuel_map[coords.y][coords.x]) { // No fuel
+					
+					utilities.log(self, `Building church at (${coords.x}, ${coords.y})`);
+					pilgrim.mission = 'return';
+					pilgrim.path = undefined;
+					pilgrim.home = coords;
+					return self.buildUnit(SPECS.CHURCH, dir.x, dir.y);
+				}
+			}
+
+			// No suitable location to build a church. Make a random move and try again
+			return pilgrim.random_move(self);
+
+		default:
+			utilities.log(self, `ERROR! Unknown mission '${pilgrim.mission}'`);
+			return;
 	}
 }
 
 // Move toward a target.
 pilgrim.move = (self, target) => {
-	if (!pilgrim.path) {
+	if (pilgrim.path === undefined) {
 		try {
 			utilities.log(self, `Calculating path to: (${target.x}, ${target.y})`);
 			pilgrim.path = movement.moveTo(self, target.x, target.y);
@@ -152,6 +215,7 @@ pilgrim.move = (self, target) => {
 		} catch(e) {
 			utilities.log(self, "Movement exception: " + e);
 			utilities.log(self, "Path-finding algorithm raised an exception! Reverting to random movement.");
+			pilgrim.path = undefined;
 			return pilgrim.random_move(self);
 		}
 	}
@@ -193,6 +257,7 @@ pilgrim.move = (self, target) => {
 	utilities.log(self, "Distance to step: " + utilities.getDistance(self.me, step));
 	if (utilities.getDistance(self.me, step) > SPECS.UNITS[SPECS.PILGRIM].SPEED) {
 		utilities.log(self, "Distance to far! Reverting to random movement.");
+		pilgrim.path = undefined;
 		return pilgrim.random_move(self);
 	}
 

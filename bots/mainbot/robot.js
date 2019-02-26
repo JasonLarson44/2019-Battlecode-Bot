@@ -28,10 +28,11 @@ class MyRobot extends BCAbstractRobot {
 			case SPECS.PROPHET:
 				this.myType = prophet;
 				break;
-        	default:
+			default:
 				break;
-        }
-		return this.myType.takeTurn(this);
+		}
+		if (this.myType)
+			return this.myType.takeTurn(this);
     }
 }
 
