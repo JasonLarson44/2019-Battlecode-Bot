@@ -61,4 +61,16 @@ utilities.inMovementRange = (self, loc) => {
 	return utilities.getDistance(self, loc) <= SPECS.UNITS[self.me.unit].SPEED;
 }
 
+utilities.findClosestCastle = (self) => {
+	let visible = self.getVisibleRobots();
+
+	for(let i = 0; i < visible.length; ++i){
+		if(visible[i].unit === SPECS.CASTLE && visible[i].team === self.me.team){
+			return {x: visible[i].x, y: visible[i].y}
+		}
+	}
+	utilities.log(self, `Failed to find a nearby castle`)
+	return undefined
+};
+
 export default utilities;
