@@ -68,17 +68,36 @@ prophet.attackPhase = (self, enemies) => {
 		catch (e) {
 			utilities.log(self, "Caught an error" + e)
 			self.moveQueue = [];
+			return movement.random(self);
+
         }
     }
     else{
         self.log("Moving to target castle at x: " + self.targetCastle.x + ", y: " + self.targetCastle.y);
-        self.moveQueue = movement.moveTo(self, self.targetCastle.x, self.targetCastle.y)
+        self.moveQueue = movement.moveTo(self, self.targetCastle.x, self.targetCastle.y);
+        if(self.moveQueue.length === 0){
+            self.targetCastle.x += 1;
+            self.targetCastle.y += 1;
+        }
     }
 
 };
 
 prophet.buildPhase = (self, enemies) => {
     utilities.log(self, "Executing Build Phase turn");
-}
+    if(self.home === undefined){
+        // Track where the robot spawned
+        self.home = utilities.findClosestCastle(self);
+    }
+    let distFromCastle = utilities.getDistance({x: self.me.x, y: self.me.y}, self.home);
+    utilities.log(self, `Distance from castle ${distFromCastle}`);
+    if(enemies.length > 0){
+        return combat.attackBot(self, enemies[0]);
+    }
+    else if(distFromCastle < 2 || !((self.x % 2 !== 0 && self.y % 2 !== 0) || (self.x % 2 !== 1 && self.y % 2 !== 1))){
+        // Move random until we get away from the castle
+        return movement.random(self);
+    }
+};
 
 export default prophet;

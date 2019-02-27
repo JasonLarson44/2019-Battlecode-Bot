@@ -62,6 +62,8 @@ castle.takeTurn = (self) => {
 		if(self.me['turn'] == '1')
 		{
 			utilities.log(self, `Castle Location: ${[self.me.x, self.me.y]}`)
+			self.castle_count = visible.length;
+			utilities.log(self, `Found ${self.castle_count} castles`);
 			for(var i=0 ;i< robotsnearme.length; i++)
 			{
 				if(robotsnearme[i].castle_talk)
