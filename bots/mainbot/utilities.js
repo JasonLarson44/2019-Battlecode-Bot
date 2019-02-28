@@ -73,4 +73,13 @@ utilities.findClosestCastle = (self) => {
 	return undefined
 };
 
+utilities.getCastleSignal = (self) => {
+	let visibleBots = self.getVisibleRobots();
+	for(let i = 0; i < visibleBots.length; i += 1){
+		if(visibleBots[i].unit === SPECS.CASTLE){
+			return visibleBots[i].signal;
+		}
+	}
+};
+
 export default utilities;
