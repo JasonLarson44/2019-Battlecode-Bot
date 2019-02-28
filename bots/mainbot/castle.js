@@ -16,8 +16,7 @@ var castle_ids = [];
 //var castle_location =[];
 var myTurn = 0 ;
 
-var buildflag = 0;
-
+var builds = 0;
 
 castle.takeTurn = (self) => {
 	
@@ -58,8 +57,9 @@ castle.takeTurn = (self) => {
 			{
 				castle_ids.push((robotsnearme[i].id))
 			}
-		self.log(castle_ids)
-		self.castleTalk(1)
+		castle_ids.sort();
+		self.log("castle_ids: " + castle_ids)
+		// self.castleTalk(1)
 	
 
 	}
@@ -92,6 +92,25 @@ castle.takeTurn = (self) => {
 	else 
 			
 			self.log('More than 1 castle')
+
+			// Check if anybody built something
+			for(let id of castle_ids) {
+				let castle = self.getRobot(id);
+				if (castle.castle_talk === 0x01) {
+					self.log("Detected build by " + id)
+					builds++;
+				}
+			}
+
+			// If it's our turn, try building something.
+			if (castle_ids[builds%castle_ids.length] === self.me.id) {
+				// Build something
+				self.log("I built something");
+				self.castleTalk(0x01);
+		}
+
+			return;
+
 			for(var i = 0 ; i < castle_ids.length ;i++ )
 		{
 			if(castle_ids[i] % 3 == 0 && robotsnearme[i].castle_talk == 1 )
