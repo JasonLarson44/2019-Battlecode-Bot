@@ -89,12 +89,12 @@ prophet.buildPhase = (self, enemies) => {
         // Track where the robot spawned
         self.home = utilities.findClosestCastle(self);
     }
-    let distFromCastle = utilities.getDistance({x: self.me.x, y: self.me.y}, self.home);
+    let distFromCastle = Math.sqrt(utilities.getDistance({x: self.me.x, y: self.me.y}, self.home));
     utilities.log(self, `Distance from castle ${distFromCastle}`);
     if(enemies.length > 0){
         return combat.attackBot(self, enemies[0]);
     }
-    else if(distFromCastle < 2 || !((self.x % 2 !== 0 && self.y % 2 !== 0) || (self.x % 2 !== 1 && self.y % 2 !== 1))){
+    else if((distFromCastle < 2) || (!((self.me.x % 2 !== 0 && self.me.y % 2 !== 1) || (self.me.x % 2 !== 1 && self.me.y % 2 !== 0)))){
         // Move random until we get away from the castle
         return movement.random(self);
     }
