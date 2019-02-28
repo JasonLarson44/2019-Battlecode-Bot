@@ -96,32 +96,36 @@ castle.takeTurn = (self) => {
 
 	else if(self.me['turn'] > 1 && castle_ids.length > 1)
 	{	
-			self.log('More than 1 castle')
+		self.log('More than 1 castle')
 
-			// Check if anybody built something
-			for(let id of castle_ids) {
-				var castle = self.getRobot(id);
+		// Check if anybody built something
+		for(let id of castle_ids) {
+			let castle = self.getRobot(id);
 
-				if (castle != null){
-					if (castle.castle_talk === 0x01) {
+			if (castle === null) {
+				// If castle has been destroyed, remove it from the list of castles
+				castle_ids.splice(castle_ids.indexOf(id), 1)
+			} else {
+				// Check if castle built anything
+				if (castle.castle_talk === 0x01) {
 					self.log("Detected build by " + id)
 					builds++;
 				}
 			}
-		} 
-		self.log('What is castle now')
-		self.log(castle)
-		if(castle == null)
+		}
+
+		self.log('How many castles remain? ' + castle_ids.length)
+		if(castle_ids.length === 1)
 		{
 			self.log("Im the only castle let me keep building")
-			if (  self.karbonite > 30 && self.fuel > 150 )
-			   {
+			if (self.karbonite > 30 && self.fuel > 150 )
+			{
 			   var d = getBuildDir(self.me);
-			   if (!(d === undefined)){
-				   self.log('Building a crusader ' + (self.me.x+1) + ',' + (self.me.y+1));
-				    return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
-				   }
-			   }
+			   if (!(d === undefined)) {
+					self.log('Building a crusader ' + (self.me.x+1) + ',' + (self.me.y+1));
+					return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
+				}
+			}
 			if ( self.karbonite > 30 && self.fuel > 150 )
 			{
 					var d = getBuildDir(self.me);
@@ -132,44 +136,43 @@ castle.takeTurn = (self) => {
 				prophetnum++
 			}			
 		}
+
 		// If it's our turn, try building something.
-			if (castle_ids[builds%castle_ids.length] === self.me.id) {
-				// Build something
-							
-				if ( self.karbonite > 30 && self.fuel > 150)
-	   			{
-		   			var d = getBuildDir(self.me);
-		   			if (!(d === undefined)){
-					   self.log('Building a crusader at' + (self.me.x+1) + ',' + (self.me.y+1));
-					  self.buildUnit(SPECS.CRUSADER, d.x, d.y);
-			  		 }	
+		if (castle_ids[builds%castle_ids.length] === self.me.id) {
+			// Build something
 						
-	   			}
-				if ( self.karbonite > 30 && self.fuel > 150 )
-				{
-					var d = getBuildDir(self.me);
-					if (!(d === undefined)){
-						self.log('Building a prophet at' + (self.me.x+1) + ',' + (self.me.y+1));
-						return self.buildUnit(SPECS.PROPHET, d.x, d.y);
+			if ( self.karbonite > 30 && self.fuel > 150)
+			{
+				var d = getBuildDir(self.me);
+				if (!(d === undefined)){
+					self.log('Building a crusader at' + (self.me.x+1) + ',' + (self.me.y+1));
+					self.buildUnit(SPECS.CRUSADER, d.x, d.y);
 					}	
 					
-				}			
-			
-				self.log("I built something");
-				self.castleTalk(0x01);
+			}
+			if ( self.karbonite > 30 && self.fuel > 150 )
+			{
+				var d = getBuildDir(self.me);
+				if (!(d === undefined)){
+					self.log('Building a prophet at' + (self.me.x+1) + ',' + (self.me.y+1));
+					return self.buildUnit(SPECS.PROPHET, d.x, d.y);
+				}	
+				
+			}
+		
+			self.log("I built something");
+			self.castleTalk(0x01);
 		}
 	}
 
-	//				return;
-
 	pilgrims.signal = 0;
-   for (i =0 ; i < robotsnearme.length ; i++)
-   {
-	   var robot = robotsnearme[i]
-	   if( robot.castle_talk == 0xFF)
-	   {
-		  pilgrims.signal++
-       }
+	for (i =0 ; i < robotsnearme.length ; i++)
+	{
+		var robot = robotsnearme[i]
+		if( robot.castle_talk == 0xFF)
+		{
+			pilgrims.signal++
+		}
 	}
 
 	if(self.me['turn'] > 1 &&  pilgrims.signal < 4 &&
