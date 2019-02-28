@@ -68,7 +68,6 @@ utilities.getCastleSignal = (self) => {
 			return visibleBots[i].signal;
 		}
 	}
-	return -2;
 };
 
 utilities.findClosestCastle = (self) => {
