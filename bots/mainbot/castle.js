@@ -7,21 +7,16 @@ import combat from './combat.js'
 
 const castle = {};
 const pilgrims ={};
-
 pilgrims.number = 0;
-var crusadernum = 0;
-var prophetnum = 0;
-var first_castle = true ;
 var castle_ids = [];
-//var castle_location =[];
-var myTurn = 0 ;
-
 var builds = 0;
 
 castle.takeTurn = (self) => {
 	
 	self.log('castle taking turn')
 	var robotsnearme = self.getVisibleRobots();
+	var crusadernum = 0;
+	var prophetnum = 0;
 			
 	var attackable = robotsnearme.filter((r) => {
 		if (! self.isVisible(r)){
@@ -40,7 +35,7 @@ castle.takeTurn = (self) => {
         // attack first robot
         var r = attackable[0];
         self.log('' +r);
-        self.log('attacking!(red team) ' + r + ' at loc ' + (r.x - self.me.x, r.y - self.me.y));
+        self.log('attacking! ' + r + ' at loc ' + (r.x - self.me.x, r.y - self.me.y));
         return self.attack(r.x - self.me.x, r.y - self.me.y);
 	} 
 
@@ -63,54 +58,133 @@ castle.takeTurn = (self) => {
 	
 
 	}
-
-
-	if(castle_ids.length == 1)
+	
+	if(self.me['turn'] > 1  && pilgrims.number < 4 &&
+		self.fuel > SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_FUEL'] + 10
+			&& self.karbonite >= SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_KARBONITE'])
+	{	   
+		  var d = getBuildDir(self.me);
+		  if (!(d === undefined)){
+			  self.log('Building a pilgrim at ' + (self.me.x+1) + ',' + (self.me.y+1));
+			  pilgrims.number++;
+			  return self.buildUnit(SPECS.PILGRIM, d.x, d.y);
+			  }
+	} 
+	
+	if(self.me['turn'] > 1 && castle_ids.length == 1)
 	{
 		self.log("Im the only castle let me keep building")
-		if ( self.karbonite > 30 && self.fuel > 150 && Math.random() < .3333)
+		if ( self.karbonite > 30 && self.fuel > 150)
 	   	{
 		   var d = getBuildDir(self.me);
 		   if (!(d === undefined)){
-			   self.log('Building a crusader at(blue team)  mod 10 ' + (self.me.x+1) + ',' + (self.me.y+1));
-			   pilgrims.number++;
-			   return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
+			   self.log('Building a crusader ' + (self.me.x+1) + ',' + (self.me.y+1));
+			    return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
 			   }
-			crusadernum++	
+				
 	   	}
-		if ( self.karbonite > 30 && self.fuel > 150 && Math.random() < .3333)
+		if (self.karbonite > 30 && self.fuel > 150)
 		{
 				var d = getBuildDir(self.me);
 		if (!(d === undefined)){
 				self.log('Building a prophet at' + (self.me.x+1) + ',' + (self.me.y+1));
 				return self.buildUnit(SPECS.PROPHET, d.x, d.y);
-				}
-			prophetnum++
+				}	
+			
 		}			
 	}
 
-	else 
-			
+	else if(self.me['turn'] > 1 && castle_ids.length > 1)
+	{	
 			self.log('More than 1 castle')
 
 			// Check if anybody built something
 			for(let id of castle_ids) {
-				let castle = self.getRobot(id);
-				if (castle.castle_talk === 0x01) {
+				var castle = self.getRobot(id);
+
+				if (castle != null){
+					if (castle.castle_talk === 0x01) {
 					self.log("Detected build by " + id)
 					builds++;
 				}
 			}
-
-			// If it's our turn, try building something.
+		} 
+		self.log('What is castle now')
+		self.log(castle)
+		if(castle == null)
+		{
+			self.log("Im the only castle let me keep building")
+			if (  self.karbonite > 30 && self.fuel > 150 )
+			   {
+			   var d = getBuildDir(self.me);
+			   if (!(d === undefined)){
+				   self.log('Building a crusader ' + (self.me.x+1) + ',' + (self.me.y+1));
+				    return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
+				   }
+			   }
+			if ( self.karbonite > 30 && self.fuel > 150 )
+			{
+					var d = getBuildDir(self.me);
+			if (!(d === undefined)){
+					self.log('Building a prophet at' + (self.me.x+1) + ',' + (self.me.y+1));
+					return self.buildUnit(SPECS.PROPHET, d.x, d.y);
+					}
+				prophetnum++
+			}			
+		}
+		// If it's our turn, try building something.
 			if (castle_ids[builds%castle_ids.length] === self.me.id) {
 				// Build something
+							
+				if ( self.karbonite > 30 && self.fuel > 150)
+	   			{
+		   			var d = getBuildDir(self.me);
+		   			if (!(d === undefined)){
+					   self.log('Building a crusader at' + (self.me.x+1) + ',' + (self.me.y+1));
+					  self.buildUnit(SPECS.CRUSADER, d.x, d.y);
+			  		 }	
+						
+	   			}
+				if ( self.karbonite > 30 && self.fuel > 150 )
+				{
+					var d = getBuildDir(self.me);
+					if (!(d === undefined)){
+						self.log('Building a prophet at' + (self.me.x+1) + ',' + (self.me.y+1));
+						return self.buildUnit(SPECS.PROPHET, d.x, d.y);
+					}	
+					
+				}			
+			
 				self.log("I built something");
 				self.castleTalk(0x01);
 		}
+	}
 
-			return;
+	//				return;
 
+	pilgrims.signal = 0;
+   for (i =0 ; i < robotsnearme.length ; i++)
+   {
+	   var robot = robotsnearme[i]
+	   if( robot.castle_talk == 0xFF)
+	   {
+		  pilgrims.signal++
+       }
+	}
+
+	if(self.me['turn'] > 1 &&  pilgrims.signal < 4 &&
+		self.fuel > SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_FUEL'] + 10
+			&& self.karbonite >= SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_KARBONITE'])
+	{	   
+		  var d = getBuildDir(self.me);
+		  if (!(d === undefined)){
+			  self.log('Building a pilgrim at ' + (self.me.x+1) + ',' + (self.me.y+1));
+			  pilgrims.number++;
+			  return self.buildUnit(SPECS.PILGRIM, d.x, d.y);
+			  }
+	} 
+
+/*
 			for(var i = 0 ; i < castle_ids.length ;i++ )
 		{
 			if(castle_ids[i] % 3 == 0 && robotsnearme[i].castle_talk == 1 )
@@ -232,29 +306,9 @@ castle.takeTurn = (self) => {
 			pilgrims.number++;
 			return self.buildUnit(SPECS.PILGRIM, d.x, d.y);
 		} 
-	} */
+} */ 
 	 
-   pilgrims.signal = 0;
-   for (i =0 ; i < robotsnearme.length ; i++)
-   {
-	   var robot = robotsnearme[i]
-	   if( robot.castle_talk == 0xFF)
-	   {
-		  pilgrims.signal++
-       }
-	}
-
-	if(self.me['turn'] >1 && (pilgrims.signal < 4 || pilgrims.number < 4) &&
-		self.fuel > SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_FUEL'] + 10
-			&& self.karbonite >= SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_KARBONITE'])
-	{	   
-		  var d = getBuildDir(self.me);
-		  if (!(d === undefined)){
-			  self.log('Building a pilgrim at(blue team) ' + (self.me.x+1) + ',' + (self.me.y+1));
-			  pilgrims.number++;
-			  return self.buildUnit(SPECS.PILGRIM, d.x, d.y);
-			  }
-    }   
+   
 
 /*	if (self.me.turn > 5 && self.me.turn % 2 == 0 && self.karbonite > 30 && self.fuel > 150 && Math.random() < .3333)
 	   {
