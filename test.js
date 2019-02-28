@@ -4,6 +4,7 @@ const rewire = require('rewire');
 const bot = rewire('./test_compiled_bot.js');
 let utilities = bot.__get__("utilities");
 let SPECS = bot.__get__("SPECS")
+let nav = bot.__get__("nav")
 
 describe("utilities", function() {
   describe("#getDistance()", function() {
@@ -68,6 +69,24 @@ describe("utilities", function() {
       assert(!utilities.inMovementRange(state, {x:8, y:5}), "True for 3 to the right");
       assert(!utilities.inMovementRange(state, {x:5, y:2}), "True for 3 up");
       assert(!utilities.inMovementRange(state, {x:3, y:4}), "True for left-up diag");
+    });
+  });
+
+});
+
+describe("nav", function() {
+  describe("#applyDir()", function() {
+    it("should return the sum of two points", function() {
+      assert.deepEqual(nav.applyDir({x:0,y:1}, {x:0,y:1}), {x:0,y:2});
+      assert.deepEqual(nav.applyDir({x:1,y:0}, {x:1,y:0}),  {x:2,y:0});
+      assert.deepEqual(nav.applyDir({x:0,y:-1}, {x:0,y:-1}),{x:0,y:-2});
+    });
+  });
+  describe("#getDir()", function() {
+    it("should return 1 or -1 based on x & y cordinates of start and  target", function() {
+      assert.deepEqual(nav.getDir({x:4,y:3}, {x:2,y:4}), {x:-1,y:1});
+      assert.deepEqual(nav.getDir({x:3,y:4}, {x:5,y:2}),  {x:1,y:-1});
+      assert.deepEqual(nav.getDir({x:5,y:6}, {x:3,y:4}),{x:-1,y:-1});
     });
   });
 });
