@@ -97,7 +97,7 @@ castle.buildUnits = (self) => {
 castle.crusaderRush = (self) => {
 
     // If we have less than enough pilgrims and we have the resources
-    if (pilgrims.number < 2 &&
+    if (pilgrims.number < 3 &&
         self.fuel > SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_FUEL'] + 10 &&
 	    self.karbonite >= SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_KARBONITE'] ){
            var d = castle.getBuildDir(self);

@@ -88,7 +88,7 @@ pilgrim.takeTurn = (self) => {
 
 	// Choose a mission if one already isn't selected
 	if (pilgrim.mission === undefined) {
-		if (self.karbonite < 50) {
+		if (self.karbonite < 100) {
 			pilgrim.mission = 'karbonite'
 			pilgrim.target = pilgrim.findClosestResource(self, self.karbonite_map);
 		} else {
