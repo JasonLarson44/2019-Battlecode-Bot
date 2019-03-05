@@ -82,4 +82,25 @@ utilities.findClosestCastle = (self) => {
 	return undefined
 };
 
+utilities.findClosestCastle = (self) => {
+	let visible = self.getVisibleRobots();
+
+	for(let i = 0; i < visible.length; ++i){
+		if(visible[i].unit === SPECS.CASTLE && visible[i].team === self.me.team){
+			return {x: visible[i].x, y: visible[i].y}
+		}
+	}
+	utilities.log(self, `Failed to find a nearby castle`)
+	return undefined
+};
+
+utilities.getCastleSignal = (self) => {
+	let visibleBots = self.getVisibleRobots();
+	for(let i = 0; i < visibleBots.length; i += 1){
+		if(visibleBots[i].unit === SPECS.CASTLE){
+			return visibleBots[i].signal;
+		}
+	}
+};
+
 export default utilities;

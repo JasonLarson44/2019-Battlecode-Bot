@@ -80,7 +80,6 @@ crusader.attackPhase = (self, enemies) => {
             self.targetCastle.y += 1;
         }
     }
-
 };
 
 crusader.buildPhase = (self, enemies) => {

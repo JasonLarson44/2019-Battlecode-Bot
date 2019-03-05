@@ -1,6 +1,6 @@
 'use strict';
 
-import {BCAbstractRobot, SPECS} from 'battlecode';
+import { BCAbstractRobot, SPECS} from 'battlecode';
 import nav from './nav.js' ;
 import utilities from './utilities.js'
 import combat from './combat.js'
@@ -9,6 +9,9 @@ const castle = {};
 const pilgrims ={};
 
 pilgrims.number = 0;
+var castle_ids = [];
+var builds = 0;
+var buildunitflag =0 ;
 
 castle.takeTurn = (self) => {
     self.log('castle taking turn')
@@ -30,7 +33,6 @@ castle.takeTurn = (self) => {
 	}
 
 	var robotsnearme = self.getVisibleRobots();
-
 	var getBuildDir = function(buildunit) {
         var options = nav.rotate_arr.filter((d) => {
             return nav.isPassable(nav.applyDir(self.me, d), self.getPassableMap(), self.getVisibleRobotMap())
