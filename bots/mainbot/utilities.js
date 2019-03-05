@@ -27,8 +27,10 @@ utilities.enemiesInRange = (self) => {
 	let maxRange = botSpec['ATTACK_RADIUS'][1];
 	let myTeam = self.me.team;
 	let robotsInVision = self.getVisibleRobots();
+	let dist;
 	for(let i = 0; i < robotsInVision.length; ++i){
-		if(robotsInVision[i].team !== myTeam && Math.pow(utilities.getDistance(self.me, robotsInVision[i]), 2) < maxRange){
+		dist = utilities.getDistance(self.me, robotsInVision[i]);
+		if(robotsInVision[i].team !== myTeam && dist < maxRange && dist >= minRange){
 			enemies.push(robotsInVision[i])
 		}
 	}
@@ -58,5 +60,26 @@ utilities.isAdjacent = (loc1, loc2) => {
 utilities.inMovementRange = (self, loc) => {
 	return utilities.getDistance(self, loc) <= SPECS.UNITS[self.me.unit].SPEED;
 }
+
+utilities.findClosestCastle = (self) => {
+	let visible = self.getVisibleRobots();
+
+	for(let i = 0; i < visible.length; ++i){
+		if(visible[i].unit === SPECS.CASTLE && visible[i].team === self.me.team){
+			return {x: visible[i].x, y: visible[i].y}
+		}
+	}
+	utilities.log(self, `Failed to find a nearby castle`)
+	return undefined
+};
+
+utilities.getCastleSignal = (self) => {
+	let visibleBots = self.getVisibleRobots();
+	for(let i = 0; i < visibleBots.length; i += 1){
+		if(visibleBots[i].unit === SPECS.CASTLE){
+			return visibleBots[i].signal;
+		}
+	}
+};
 
 export default utilities;

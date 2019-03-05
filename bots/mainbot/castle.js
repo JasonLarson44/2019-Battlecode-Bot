@@ -7,16 +7,29 @@ import combat from './combat.js'
 
 const castle = {};
 const pilgrims ={};
+
+
 pilgrims.number = 0;
 var castle_ids = [];
 var builds = 0;
 var buildunitflag =0 ;
 castle.takeTurn = (self) => {
-	
-	self.log('castle taking turn')
+
+    self.log('castle taking turn')
+	const visible = self.getVisibleRobots();
+	//self.log('the visbile robots are:' + visible) ;
+    castle.countUnits(self, visible);
+
+    utilities.log(self, `Current unit counts: Castles: ${self.castle_count}, Crusaders: ${self.crusader_count}, Prophets: ${self.prophet_count}, Pilgrims: ${self.pilgrim_count}`)
+
+	if(self.prophet_count >= 5){
+        self.signal(0x01, 5);
+        utilities.log(self, "Castle setting attack phase")
+	}
+
 	var robotsnearme = self.getVisibleRobots();
 
-			
+
 	var attackable = robotsnearme.filter((r) => {
 		if (! self.isVisible(r)){
 			return false;
@@ -30,46 +43,49 @@ castle.takeTurn = (self) => {
 		return false;
 	});
 
-	if (attackable.length>0 && self.me.health > 50 ){
+	if (attackable.length>0){
         // attack first robot
         var r = attackable[0];
         self.log('' +r);
         self.log('attacking! ' + r + ' at loc ' + (r.x - self.me.x, r.y - self.me.y));
         return self.attack(r.x - self.me.x, r.y - self.me.y);
-	} 
+	}
 
 	var getBuildDir = function(buildunit) {
 		var options = nav.rotate_arr.filter((d) => {
 			return nav.isPassable(nav.applyDir(self.me, d), self.getPassableMap(), self.getVisibleRobotMap())
 		})
 		return options[0];
-	} 
+	}
 
-	if(self.me['turn'] == '1')
-	{
-		for(var i=0 ;i< robotsnearme.length; i++)
+		if(self.me['turn'] == '1')
+		{
+			utilities.log(self, `Castle Location: ${[self.me.x, self.me.y]}`)
+			self.castle_count = visible.length;
+			utilities.log(self, `Found ${self.castle_count} castles`);
+			for(var i=0 ;i< robotsnearme.length; i++)
 			{
 				castle_ids.push((robotsnearme[i].id))
 			}
 		castle_ids.sort();
 		self.log("castle_ids: " + castle_ids)
 		// self.castleTalk(1)
-	
+
 
 	}
-	
+
 	if(self.me['turn'] > 1  && pilgrims.number < 4 &&
 		self.fuel > SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_FUEL'] + 10
 			&& self.karbonite >= SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_KARBONITE'])
-	{	   
+	{
 		  var d = getBuildDir(self.me);
 		  if (!(d === undefined)){
 			  self.log('Building a pilgrim at ' + (self.me.x+1) + ',' + (self.me.y+1));
 			  pilgrims.number++;
 			  return self.buildUnit(SPECS.PILGRIM, d.x, d.y);
 			  }
-	} 
-	
+	}
+
 	if(self.me['turn'] > 1 && castle_ids.length == 1)
 	{
 		self.log("Im the only castle let me keep building")
@@ -81,7 +97,7 @@ castle.takeTurn = (self) => {
 			   buildunitflag = (buildunitflag + 1) % 2
 			    return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
 			   }
-				
+
 	   	}
 		if (buildunitflag === 1 && self.karbonite > 30 && self.fuel > 100)
 		{
@@ -90,13 +106,13 @@ castle.takeTurn = (self) => {
 				self.log('Building a prophet at' + (self.me.x+1) + ',' + (self.me.y+1));
 				buildunitflag = (buildunitflag + 1) % 2
 				return self.buildUnit(SPECS.PROPHET, d.x, d.y);
-				}	
-			
-		}			
+				}
+
+		}
 	}
 
 	else if(self.me['turn'] > 1 && castle_ids.length > 1)
-	{	
+	{
 		self.log('More than 1 castle')
 
 		// Check if anybody built something
@@ -136,14 +152,14 @@ castle.takeTurn = (self) => {
 					buildunitflag = (buildunitflag + 1) % 2
 					return self.buildUnit(SPECS.PROPHET, d.x, d.y);
 					}
-				
-			}			
+
+			}
 		}
 
 		// If it's our turn, try building something.
 		if (castle_ids[builds%castle_ids.length] === self.me.id) {
 			// Build something
-						
+
 			if ( buildunitflag === 0 && self.karbonite > 30 && self.fuel > 100)
 			{
 				var d = getBuildDir(self.me);
@@ -151,8 +167,8 @@ castle.takeTurn = (self) => {
 					self.log('Building a crusader at' + (self.me.x+1) + ',' + (self.me.y+1));
 					buildunitflag = (buildunitflag + 1) % 2
 					return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
-					}	
-					
+					}
+
 			}
 			if ( buildunitflag === 1 && self.karbonite > 30 && self.fuel > 100 )
 			{
@@ -161,10 +177,10 @@ castle.takeTurn = (self) => {
 					self.log('Building a prophet at' + (self.me.x+1) + ',' + (self.me.y+1));
 					buildunitflag = (buildunitflag + 1) % 2
 					return self.buildUnit(SPECS.PROPHET, d.x, d.y);
-				}	
-				
+				}
+
 			}
-		
+
 			self.log("I built something");
 			self.castleTalk(0x01);
 		}
@@ -183,20 +199,20 @@ castle.takeTurn = (self) => {
 	if(self.me['turn'] > 1 &&  pilgrims.signal < 4 &&
 		self.fuel > SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_FUEL'] + 10
 			&& self.karbonite >= SPECS['UNITS'][SPECS['PILGRIM']]['CONSTRUCTION_KARBONITE'])
-	{	   
+	{
 		  var d = getBuildDir(self.me);
 		  if (!(d === undefined)){
 			  self.log('Building a pilgrim at ' + (self.me.x+1) + ',' + (self.me.y+1));
 			  pilgrims.number++;
 			  return self.buildUnit(SPECS.PILGRIM, d.x, d.y);
 			  }
-	} 
+	}
 
 /*
 			for(var i = 0 ; i < castle_ids.length ;i++ )
 		{
 			if(castle_ids[i] % 3 == 0 && robotsnearme[i].castle_talk == 1 )
-			{ 
+			{
 				self.log('Inside mod value == 0')
 				if ( self.karbonite > 30 && self.fuel > 150)
 	   			{
@@ -204,8 +220,8 @@ castle.takeTurn = (self) => {
 		   			if (!(d === undefined)){
 					   self.log('Building a crusader at' + (self.me.x+1) + ',' + (self.me.y+1));
 					 return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
-			  		 }	
-					crusadernum++	
+			  		 }
+					crusadernum++
 	   			}
 				if ( self.karbonite > 30 && self.fuel > 150 )
 				{
@@ -213,9 +229,9 @@ castle.takeTurn = (self) => {
 					if (!(d === undefined)){
 						self.log('Building a prophet at' + (self.me.x+1) + ',' + (self.me.y+1));
 						return self.buildUnit(SPECS.PROPHET, d.x, d.y);
-					}	
+					}
 					prophetnum++
-				}			
+				}
 				self.log('Crusaders built are mod ==0 :' + crusadernum)
 				self.log('prophets built are :' + prophetnum)
 
@@ -224,10 +240,10 @@ castle.takeTurn = (self) => {
 					buildflag = 1
 					self.castleTalk(1)
 				}
-				
-			}	
+
+			}
 		else if (castle_ids[i] % 3 == 1 && robotsnearme[i].castle_talk == 1)
-		{ 
+		{
 			self.log('Inside mod value == 1')
 			if ( self.karbonite > 30 && self.fuel > 150 )
 			   {
@@ -235,8 +251,8 @@ castle.takeTurn = (self) => {
 				   if (!(d === undefined)){
 				   self.log('Building a crusader at' + (self.me.x+1) + ',' + (self.me.y+1));
 				 return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
-				   }	
-				crusadernum++	
+				   }
+				crusadernum++
 			   }
 			if ( self.karbonite > 30 && self.fuel > 150 )
 			{
@@ -244,9 +260,9 @@ castle.takeTurn = (self) => {
 				if (!(d === undefined)){
 					self.log('Building a prophet at' + (self.me.x+1) + ',' + (self.me.y+1));
 					return self.buildUnit(SPECS.PROPHET, d.x, d.y);
-				}	
+				}
 				prophetnum++
-			}			
+			}
 			self.log('Crusaders built are mod == 1 :' + crusadernum)
             self.log('prophets built are :' + prophetnum)
 			if(crusadernum == 5 && prophetnum == 5)
@@ -264,8 +280,8 @@ castle.takeTurn = (self) => {
 				   if (!(d === undefined)){
 				   self.log('Building a crusader at' + (self.me.x+1) + ',' + (self.me.y+1));
 				 return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
-				   }	
-				crusadernum++	
+				   }
+				crusadernum++
 			   }
 			if ( self.karbonite > 30 && self.fuel > 150 )
 			{
@@ -273,9 +289,9 @@ castle.takeTurn = (self) => {
 				if (!(d === undefined)){
 					self.log('Building a prophet at' + (self.me.x+1) + ',' + (self.me.y+1));
 					return self.buildUnit(SPECS.PROPHET, d.x, d.y);
-				}	
+				}
 				prophetnum++
-			}			
+			}
 			self.log('Crusaders built are mod ==2 :' + crusadernum)
 			self.log('prophets built are :' + prophetnum)
 			if(crusadernum == 5 && prophetnum == 5)
@@ -283,11 +299,11 @@ castle.takeTurn = (self) => {
 				buildflag = 0
 				self.castleTalk(1)
 			}
-	
-		}	
-	
+
+		}
+
 	}
-	
+
 /*	if(self.me['turn'] == 2 )
 	{
 			var d = getBuildDir(self.me);
@@ -295,10 +311,10 @@ castle.takeTurn = (self) => {
 			self.log('Building a pilgrim at ' + (self.me.x+1) + ',' + (self.me.y+1));
 			pilgrims.number++;
 			return self.buildUnit(SPECS.PILGRIM, d.x, d.y);
-		} 	
-			
+		}
+
 	}
-		
+
 	if(self.me['turn'] == 3)
 	{
 		self.log('Turn 2 for blue team')
@@ -306,17 +322,17 @@ castle.takeTurn = (self) => {
 				if (!(d === undefined)){
 					self.log('Building a prophet at ' + (self.me.x+1) + ',' + (self.me.y+1));
 					 return self.buildUnit(SPECS.PROPHET, d.x, d.y);
-				}	
-				
+				}
+
 			var d = getBuildDir(self.me);
 			if (!(d === undefined)){
 			self.log('Building a pilgrim at ' + (self.me.x+1) + ',' + (self.me.y+1));
 			pilgrims.number++;
 			return self.buildUnit(SPECS.PILGRIM, d.x, d.y);
-		} 
-} */ 
-	 
-   
+		}
+} */
+
+
 
 /*	if (self.me.turn > 5 && self.me.turn % 2 == 0 && self.karbonite > 30 && self.fuel > 150 && Math.random() < .3333)
 	   {
@@ -327,7 +343,7 @@ castle.takeTurn = (self) => {
 		   return self.buildUnit(SPECS.PROPHET, d.x, d.y);
 		   }
 	   }
-	   
+
 	   if ( self.me.turn >5 && self.me.turn % 2 != 0 && self.karbonite > 30 && self.fuel > 150 && Math.random() < .3333)
 	   {
 		   var d = getBuildDir(self.me);
@@ -335,9 +351,9 @@ castle.takeTurn = (self) => {
 			   self.log('Building a crusader at(blue team)  mod 10 ' + (self.me.x+1) + ',' + (self.me.y+1));
 			   pilgrims.number++;
 			   return self.buildUnit(SPECS.CRUSADER, d.x, d.y);
-			   }	
+			   }
 	   }   */
-	   
+
 	 /*  var enemies = utilities.enemiesInRange(self);
 	   if(enemies.length > 0){
 		   for(let i = 0; i < enemies.length; ++i){
@@ -346,8 +362,38 @@ castle.takeTurn = (self) => {
 				   return combat.attackBot(self, enemies[i]);
 			   }
 		   } */
-	   
 
+
+};
+
+// Counts bots castle can see.
+castle.countUnits = (self, visibleBots) => {
+    let bot = undefined;
+    // Zero the counts
+    self.castle_count = 0;
+    self.crusader_count = 0;
+    self.pilgrim_count = 0;
+    self.prophet_count = 0;
+    for (let i = 0; i < visibleBots.length; ++i){
+        bot = visibleBots[i];
+        // utilities.log(self, `Bot at ${i} has unit ${bot.unit} and castleTalk ${bot.castleTalk}`);
+        switch (bot.unit) {
+        	case SPECS.CASTLE:
+				self.castle_count +=1;
+        		break;
+			case SPECS.CRUSADER:
+				self.crusader_count +=1;
+				break;
+			case SPECS.PILGRIM:
+				self.pilgrim_count +=1;
+				break;
+			case SPECS.PROPHET:
+				self.prophet_count +=1;
+				break;
+			default:
+				break;
+		}
+    }
 };
 
 export default castle;
