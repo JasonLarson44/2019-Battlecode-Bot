@@ -8,21 +8,21 @@ const pilgrim = {};
 
 pilgrim.mission = undefined;// Current mission to fulfill
 pilgrim.target = undefined; // Location of resource we are mining
-pilgrim.home = undefined;   // Location of originating castle
-pilgrim.path = undefined;   // Path to follow to reach target
+pilgrim.home = undefined;	 // Location of originating castle
+pilgrim.path = undefined;	 // Path to follow to reach target
 pilgrim.resource_map = undefined;
-pilgrim.blacklist = [];     // List of resource locations to ignore
+pilgrim.blacklist = [];		 // List of resource locations to ignore
 
 const MAX_TRAVEL = 16; // Maximum (squared) distance to travel to a church or castle
 const dirs = [
-    { x: 0, y: -1 },
-    { x: 1, y: -1 },
-    { x: -1, y: -1 },
-    { x: 1, y: 0 },
-    { x: -1, y: 0 },
-    { x: 0, y: 1 },
-    { x: 1, y: 1 },
-    { x: -1, y: 1 },
+		{ x: 0, y: -1 },
+		{ x: 1, y: -1 },
+		{ x: -1, y: -1 },
+		{ x: 1, y: 0 },
+		{ x: -1, y: 0 },
+		{ x: 0, y: 1 },
+		{ x: 1, y: 1 },
+		{ x: -1, y: 1 },
 ];
 
 pilgrim.create_resource_map = (self) => {
@@ -32,7 +32,7 @@ pilgrim.create_resource_map = (self) => {
 	}
 
 	let i, j;
-  for (i = 0; i < self.map.length; i++) {
+	for (i = 0; i < self.map.length; i++) {
 		for (j = 0; j < self.map[i].length; j++) {
 			resource_map[i][j] = self.karbonite_map[i][j] || self.fuel_map[i][j];
 		}
@@ -48,7 +48,7 @@ pilgrim.create_resource_map = (self) => {
 // Returns: Object with x and y properties specifying the coordinates of the
 // closest resource deposit
 pilgrim.findClosestResource = (self, blacklist=[]) => {
-  let closestLocation = undefined;
+	let closestLocation = undefined;
 	let closestDistance = Infinity;
 
 	if (pilgrim.resource_map === undefined) {
@@ -56,7 +56,7 @@ pilgrim.findClosestResource = (self, blacklist=[]) => {
 	}
 	
 	let i, j;
-  for (i = 0; i < pilgrim.resource_map.length; i++) {
+	for (i = 0; i < pilgrim.resource_map.length; i++) {
 		for (j = 0; j < pilgrim.resource_map[i].length; j++) {
 			if (pilgrim.resource_map[i][j]) {
 				var distance = Math.pow(self.me.x - j, 2) + Math.pow(self.me.y - i, 2);
@@ -138,7 +138,7 @@ pilgrim.takeTurn = (self) => {
 						for (let r of self.getVisibleRobots()) {
 							if ((r.unit === SPECS.CASTLE || r.unit === SPECS.CHURCH) && // Unit is a castle or church
 								r.team == self.me.team && // Unit is on my team
-							 	utilities.getDistance(self.me, r) <= MAX_TRAVEL) { // Unit is reasonably close
+								 utilities.getDistance(self.me, r) <= MAX_TRAVEL) { // Unit is reasonably close
 
 								utilities.log(self, `Setting new pilgrim home at (${r.x}, ${r.y})`);
 								pilgrim.home = {x: r.x, y: r.y};
@@ -180,7 +180,7 @@ pilgrim.takeTurn = (self) => {
 					pilgrim.path = undefined;
 					return pilgrim.takeTurn(self);
 				} else {
-					utilities.log(self, `Target: (${pilgrim.target.x}, ${pilgrim.target.y})    Location: ${[self.me.x, self.me.y]}`)
+					utilities.log(self, `Target: (${pilgrim.target.x}, ${pilgrim.target.y})		Location: ${[self.me.x, self.me.y]}`)
 					return pilgrim.move(self, pilgrim.target);
 				}
 			}
