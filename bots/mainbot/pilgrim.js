@@ -110,27 +110,21 @@ pilgrim.takeTurn = (self) => {
 
 	// Choose a mission if one already isn't selected
 	if (pilgrim.mission === undefined) {
-		if (self.karbonite < 500) {
-			pilgrim.mission = 'karbonite'
-			pilgrim.target = pilgrim.findClosestResource(self, self.karbonite_map);
-		} else {
-			pilgrim.mission = 'fuel'
-			pilgrim.target = pilgrim.findClosestResource(self, self.fuel_map);
-		}
-		utilities.log(self, `Pilgrim on ${pilgrim.mission} mission at (${pilgrim.target.x}, ${pilgrim.target.y})`)
+		pilgrim.mission = 'mine'
+		pilgrim.target = pilgrim.findClosestResource(self);
+		utilities.log(self, `Pilgrim on mining mission at (${pilgrim.target.x}, ${pilgrim.target.y})`)
 	}
 
 	// Execute current mission
 	// TODO: break out into functions
 	switch (pilgrim.mission) {
-		case 'karbonite':
-		case 'fuel':
+		case 'mine':
 			// On top of a resource deposit
 			if (pilgrim.target.x === self.me.x && pilgrim.target.y === self.me.y) {
 				// Mine until we're full
 				if (self.me.fuel < SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY && 
 					self.me.karbonite < SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
-					utilities.log(self, `Mining ${pilgrim.mission} at (${self.me.x}, ${self.me.y}) (Current: ${Math.max(self.me.fuel, self.me.karbonite)})`);
+					utilities.log(self, `Mining at (${self.me.x}, ${self.me.y}) (Current: ${Math.max(self.me.fuel, self.me.karbonite)})`);
 
 					return self.mine();
 

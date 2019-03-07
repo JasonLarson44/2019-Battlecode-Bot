@@ -18,8 +18,8 @@ generate_grid = (x, y, val = false) => {
   return grid;
 }
 
-utilities.log = (self, message) => {}; // Disable output from log statements
-// utilities.log = (self, message) => {console.log(message)}; // Enable output from log statements
+// utilities.log = (self, message) => {}; // Disable output from log statements
+utilities.log = (self, message) => {console.log(message)}; // Enable output from log statements
 
 describe("utilities", function() {
   describe("#getDistance()", function() {
@@ -103,7 +103,6 @@ describe("utilities", function() {
     });
   });
 });
-
 
 describe("Pilgrim", function() {
   describe("#create_resource_map()", function() {
@@ -221,6 +220,135 @@ describe("Pilgrim", function() {
       let result = pilgrim.move(robot, {x:3, y:1});
 
       assert.deepEqual(result, {x:1, y:0});
+    });
+  });
+
+  describe("takeTurn()", function() {
+    it("first turn, should move toward resource", function() {
+      let robot = {
+        map: generate_grid(5, 5, true),
+        fuel: 0,
+        karbonite: 0,
+
+        me: {
+          x: 1,
+          y: 1,
+          unit: SPECS.PILGRIM,
+        },
+
+        getVisibleRobotMap: () => {return generate_grid(5, 5, 0);},
+        getVisibleRobots: () => {return [{unit: SPECS.CASTLE, x:0, y:0}];},
+        move: (dx, dy) => {return {x:dx,y:dy};},
+        castleTalk: (_) => {return;},
+      };
+
+      pilgrim.resource_map = generate_grid(5, 5, false);
+      pilgrim.resource_map[1][4] = true;
+      pilgrim.move = (self, target) => {return target;};
+
+      let result = pilgrim.takeTurn(robot);
+
+      assert.deepEqual(result, {x:4, y:1});
+    });
+    
+    it("headed toward occupied resource, should move toward another resource", function() {
+      let robot = {
+        map: generate_grid(5, 5, true),
+        _robot_map: generate_grid(5, 5, 0),
+        fuel: 0,
+        karbonite: 0,
+
+        me: {
+          x: 1,
+          y: 1,
+          unit: SPECS.PILGRIM,
+        },
+
+        getVisibleRobotMap: () => {return robot._robot_map;},
+        getVisibleRobots: () => {return [{unit: SPECS.CASTLE, x:0, y:0}, {unit: SPECS.PILGRIM, x:4, y:1}];},
+        move: (dx, dy) => {return {x:dx,y:dy};},
+        castleTalk: (_) => {return;},
+      };
+
+      for (let r of robot.getVisibleRobots()) {
+        robot._robot_map[r.y][r.x] = Math.floor(Math.random() * 1024);
+      }
+
+      pilgrim.resource_map = generate_grid(5, 5, false);
+      pilgrim.resource_map[1][4] = true;
+      pilgrim.resource_map[4][4] = true;
+      pilgrim.target = {x: 4, y: 1};
+      pilgrim.move = (self, target) => {return target;};
+
+      let result = pilgrim.takeTurn(robot);
+
+      assert.deepEqual(result, {x:4, y:4});
+      assert.deepEqual(pilgrim.target, {x:4, y:4});
+    });
+    
+    it("on top of resource, should mine", function() {
+      let robot = {
+        map: generate_grid(5, 5, true),
+        fuel: 0,
+        karbonite: 0,
+
+        me: {
+          x: 1,
+          y: 1,
+          unit: SPECS.PILGRIM,
+          fuel: 0,
+          karbonite: 0,
+        },
+
+        getVisibleRobotMap: () => {return generate_grid(5, 5, 0);},
+        getVisibleRobots: () => {return [{unit: SPECS.CASTLE, x:0, y:0}];},
+        move: (dx, dy) => {return {x:dx,y:dy};},
+        castleTalk: (_) => {return;},
+        mine: () => {return "MINE";},
+      };
+
+      pilgrim.mission = "mine";
+      pilgrim.resource_map = generate_grid(5, 5, false);
+      pilgrim.resource_map[1][1] = true;
+      pilgrim.target = {x:1, y:1};
+      pilgrim.move = (self, target) => {return target;};
+
+      let result = pilgrim.takeTurn(robot);
+
+      assert.equal(result, "MINE");
+    });
+    
+    it("mining resource and capacity full, should return home", function() {
+      let robot = {
+        map: generate_grid(5, 5, true),
+        fuel: 0,
+        karbonite: SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY,
+
+        me: {
+          x: 1,
+          y: 1,
+          unit: SPECS.PILGRIM,
+        },
+
+        getVisibleRobotMap: () => {return generate_grid(5, 5, 0);},
+        getVisibleRobots: () => {return [];},
+        move: (x, y) => {return {x:x,y:y};},
+        castleTalk: (_) => {return;},
+        mine: () => {return "MINE";},
+      };
+
+      pilgrim.mission = "mine";
+      pilgrim.resource_map = generate_grid(5, 5, false);
+      pilgrim.resource_map[1][1] = true;
+      pilgrim.target = {x:1, y:1};
+      pilgrim.home = {x:4, y:4};
+      pilgrim.move = (self, target) => {return target;};
+
+      let result = pilgrim.takeTurn(robot);
+
+      // Robot will try to return to a square adjacent to home, so it can give resources to it
+      assert(utilities.isAdjacent(result, {x:4, y:4}));
+      assert.equal(pilgrim.mission, "return");
     });
   });
 });
