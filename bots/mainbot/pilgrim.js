@@ -254,24 +254,24 @@ pilgrim.move = (self, target) => {
 	if (pilgrim.path.length === 0) {
 		if (utilities.inMovementRange(self, target)) {
 			// Target in movement range, so we can move one square towards target
-			let dx = target.x - self.x;
-			let dy = target.y - self.y;
-			let step = {x: self.x, y: self.y};
+			let dx = target.x - self.me.x;
+			let dy = target.y - self.me.y;
+			let step = {x: self.me.x, y: self.me.y};
 
 			if (dx > 0) {
-				step.x = 1
+				step.x += 1;
 			} else if (dx < 0) {
-				step.dx = -1;
+				step.x -= 1;
 			}
 
 			if (dy > 0) {
-				step.y = 1;
+				step.y += 1;
 			} else if (dy < 0) {
-				step.y = -1;
+				step.y -= 1;
 			}
 
 			pilgrim.path = [step];
-			utilities.log("Closing in on target. Moving one tile toward target.");
+			utilities.log(self, "Closing in on target. Moving one tile toward target.");
 
 		} else {
 			// No valid path to target
@@ -283,7 +283,7 @@ pilgrim.move = (self, target) => {
 
 	let step = pilgrim.path.shift();
 
-	utilities.log(self, `Stepping to: (${step.x}, ${step.y})`)
+	utilities.log(self, `Stepping to: (${step.x}, ${step.y})`);
 	utilities.log(self, "Distance to step: " + utilities.getDistance(self.me, step));
 	if (utilities.getDistance(self.me, step) > SPECS.UNITS[SPECS.PILGRIM].SPEED) {
 		utilities.log(self, "Distance to far! Reverting to random movement.");

@@ -18,7 +18,8 @@ generate_grid = (x, y, val = false) => {
   return grid;
 }
 
-utilities.log = (self, message) => {};
+// utilities.log = (self, message) => {}; // Disable output from log statements
+utilities.log = (self, message) => {console.log(message)}; // Enable output from log statements
 
 describe("utilities", function() {
   describe("#getDistance()", function() {
@@ -147,6 +148,80 @@ describe("Pilgrim", function() {
 
       assert.equal(result.x, 2, "Incorrect x coordinate returned");
       assert.equal(result.y, 1, "Incorrect y coordinate returned");
+    });
+  });
+
+  describe("#random_move()", function() {
+    it("should return a move one step in a random direction", function() {
+      let robot = {
+        map: generate_grid(3, 3, true),
+
+        me: {
+          x: 1,
+          y: 1,
+        },
+
+        getVisibleRobotMap: () => {return generate_grid(3, 3, 0);},
+        move: (dx, dy) => {return {x:dx,y:dy};},
+      };
+
+      let results = [];
+      for (let i=0; i<3; i++) {
+        results.push(pilgrim.random_move(robot));
+      }
+      
+      assert(!((results[0].x === results[1].x === results[2].x) && (results[0].y === results[1].y === results[2].y)), "random_move produced 3 identical results (could be coincidence)");
+
+      for (let i=0; i<results.length; i++) {
+        assert(Math.abs(results[i].x) <= 1, "random_move produced a move farther than 1 square x");
+        assert(Math.abs(results[i].y) <= 1, "random_move produced a move farther than 1 square y");
+      }
+    });
+  });
+
+  describe("move()", function() {
+    it("should return the next optimal step", function() {
+      let robot = {
+        map: generate_grid(5, 5, true),
+
+        me: {
+          x: 1,
+          y: 1,
+          unit: SPECS.PILGRIM,
+        },
+
+        getVisibleRobotMap: () => {return generate_grid(5, 5, 0);},
+        getVisibleRobots: () => {return [];},
+        move: (dx, dy) => {return {x:dx,y:dy};},
+      };
+
+      robot.map[2][2] = false;
+
+      let result = pilgrim.move(robot, {x:4, y:4});
+
+      assert.deepEqual(result, {x:0, y:1});
+    });
+    
+    it("should return an adjacent square towards target", function() {
+      let robot = {
+        map: generate_grid(5, 5, true),
+
+        me: {
+          x: 1,
+          y: 1,
+          unit: SPECS.PILGRIM,
+        },
+
+        getVisibleRobotMap: () => {return generate_grid(5, 5, 0);},
+        getVisibleRobots: () => {return [];},
+        move: (dx, dy) => {return {x:dx,y:dy};},
+      };
+
+      pilgrim.path = [];
+      console.log(utilities.getDistance(robot.me, {x:3,y:1}));
+      let result = pilgrim.move(robot, {x:3, y:1});
+
+      assert.deepEqual(result, {x:1, y:0});
     });
   });
 });

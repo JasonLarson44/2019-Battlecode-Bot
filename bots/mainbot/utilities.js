@@ -69,7 +69,7 @@ utilities.isBeside = (loc1, loc2) => {
 
 // Returns true if loc can be moved to this turn
 utilities.inMovementRange = (self, loc) => {
-	return utilities.getDistance(self, loc) <= SPECS.UNITS[self.me.unit].SPEED;
+	return utilities.getDistance(self.me, loc) <= SPECS.UNITS[self.me.unit].SPEED;
 }
 
 export default utilities;
