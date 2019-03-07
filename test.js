@@ -321,13 +321,13 @@ describe("Pilgrim", function() {
     it("mining resource and capacity full, should return home", function() {
       let robot = {
         map: generate_grid(5, 5, true),
-        fuel: 0,
-        karbonite: SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY,
 
         me: {
           x: 1,
           y: 1,
           unit: SPECS.PILGRIM,
+          fuel: 0,
+          karbonite: SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY,
         },
 
         getVisibleRobotMap: () => {return generate_grid(5, 5, 0);},
@@ -348,6 +348,42 @@ describe("Pilgrim", function() {
 
       // Robot will try to return to a square adjacent to home, so it can give resources to it
       assert(utilities.isAdjacent(result, {x:4, y:4}));
+      assert.equal(pilgrim.mission, "return");
+    });
+    
+    it("mining resource and capacity full, should build castle", function() {
+      let robot = {
+        map: generate_grid(5, 5, true),
+        fuel: 500,
+        karbonite: 500,
+
+        me: {
+          x: 1,
+          y: 1,
+          unit: SPECS.PILGRIM,
+          fuel: 0,
+          karbonite: SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY,
+        },
+
+        getVisibleRobotMap: () => {return generate_grid(5, 5, 0);},
+        getVisibleRobots: () => {return [];},
+        move: (x, y) => {return {x:x,y:y};},
+        castleTalk: (_) => {return;},
+        mine: () => {return "MINE";},
+        buildUnit: (type, dx, dy) => {return "BUILD";},
+      };
+
+      pilgrim.mission = "mine";
+      pilgrim.resource_map = generate_grid(5, 5, false);
+      pilgrim.resource_map[1][1] = true;
+      pilgrim.target = {x:1, y:1};
+      pilgrim.home = {x:4, y:4};
+      pilgrim.move = (self, target) => {return target;};
+
+      let result = pilgrim.takeTurn(robot);
+
+      // Robot will try to return to a square adjacent to home, so it can give resources to it
+      assert.equal(result, "BUILD");
       assert.equal(pilgrim.mission, "return");
     });
   });

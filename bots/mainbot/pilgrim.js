@@ -209,8 +209,7 @@ pilgrim.takeTurn = (self) => {
 			for (let dir of dirs) {
 				let coords = {x: self.me.x + dir.x, y: self.me.y + dir.y};
 				if (utilities.isOpen(self, coords) && // Space passable
-					!self.karbonite_map[coords.y][coords.x] && // No karbonite
-					!self.fuel_map[coords.y][coords.x]) { // No fuel
+					!pilgrim.resource_map[coords.y][coords.x]) { // No resources
 					
 					utilities.log(self, `Building church at (${coords.x}, ${coords.y})`);
 					pilgrim.mission = 'return';
@@ -221,6 +220,7 @@ pilgrim.takeTurn = (self) => {
 			}
 
 			// No suitable location to build a church. Make a random move and try again
+			utilities.log(self, "No suitable location to build a church.")
 			return pilgrim.random_move(self);
 
 		default:
