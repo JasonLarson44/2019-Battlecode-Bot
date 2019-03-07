@@ -18,8 +18,8 @@ generate_grid = (x, y, val = false) => {
   return grid;
 }
 
-// utilities.log = (self, message) => {}; // Disable output from log statements
-utilities.log = (self, message) => {console.log(message)}; // Enable output from log statements
+utilities.log = (self, message) => {}; // Disable output from log statements
+// utilities.log = (self, message) => {console.log(message)}; // Enable output from log statements
 
 describe("utilities", function() {
   describe("#getDistance()", function() {
@@ -82,9 +82,9 @@ describe("utilities", function() {
   describe("#inMovementRange()", function() {
     it("Pilgrim tests", function() {
       let state = {
-        x: 5,
-        y: 5,
         me: {
+          x: 5,
+          y: 5,
           unit: SPECS.PILGRIM,
         }
       };
@@ -218,7 +218,6 @@ describe("Pilgrim", function() {
       };
 
       pilgrim.path = [];
-      console.log(utilities.getDistance(robot.me, {x:3,y:1}));
       let result = pilgrim.move(robot, {x:3, y:1});
 
       assert.deepEqual(result, {x:1, y:0});
