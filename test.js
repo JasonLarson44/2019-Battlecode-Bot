@@ -3,7 +3,22 @@ const rewire = require('rewire');
 
 const bot = rewire('./test_compiled_bot.js');
 let utilities = bot.__get__("utilities");
-let SPECS = bot.__get__("SPECS")
+let pilgrim = bot.__get__("pilgrim");
+let SPECS = bot.__get__("SPECS");
+
+generate_grid = (x, y, val = false) => {
+	let grid = new Array(y);
+	for (let i = 0; i < y; i++) {
+    grid[i] = new Array(x);
+    for (let j = 0; j < x; j++) {
+      grid[i][j] = val;
+    }
+  }
+  
+  return grid;
+}
+
+utilities.log = (self, message) => {};
 
 describe("utilities", function() {
   describe("#getDistance()", function() {
@@ -84,6 +99,54 @@ describe("utilities", function() {
       assert(!utilities.inMovementRange(state, {x:8, y:5}), "True for 3 to the right");
       assert(!utilities.inMovementRange(state, {x:5, y:2}), "True for 3 up");
       assert(!utilities.inMovementRange(state, {x:3, y:4}), "True for left-up diag");
+    });
+  });
+});
+
+
+describe("Pilgrim", function() {
+  describe("#create_resource_map()", function() {
+    it("should assign pilgrim.resource_map to be a combination of this.karbonite_map and this.fuel_map", function() {
+      let robot = {
+        karbonite_map: [[true, false, false],
+                        [false, false, true]],
+        fuel_map: [[false, false, true],
+                   [false, true, true]],
+        map: [[true, true, true],
+              [true, true, true]],
+      };
+
+      pilgrim.create_resource_map(robot);
+
+      let result = [[true, false, true],
+                    [false, true, true]]
+
+      for (let i = 0; i < result.length; i++) {
+        for (let j = 0; j < result[i].length; j++) {
+          assert(result[i][j] === pilgrim.resource_map[i][j])
+        }
+      }
+    });
+  });
+
+  describe("#findClosestResource()", function() {
+    it("should return an object with the x and y coordinates of the closest resource", function() {
+      let robot = {
+        me: {
+          x: 0,
+          y: 0,
+        }
+      };
+
+      pilgrim.resource_map = [[false, false, false],
+                              [false, false, true],
+                              [false, false, true]];
+
+
+      let result = pilgrim.findClosestResource(robot);
+
+      assert.equal(result.x, 2, "Incorrect x coordinate returned");
+      assert.equal(result.y, 1, "Incorrect y coordinate returned");
     });
   });
 });

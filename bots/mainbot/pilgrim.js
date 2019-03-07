@@ -25,6 +25,9 @@ const dirs = [
     { x: -1, y: 1 },
 ];
 
+// Create a merged karbonite and fuel map.
+// Doesn't return anything but assigns pilgrim.resource_map to be the 
+// merged resource map.
 pilgrim.create_resource_map = (self) => {
 	let resource_map = new Array(self.map.length);
 	for (let i = 0; i < self.map.length; i++) {
