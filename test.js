@@ -25,6 +25,22 @@ describe("utilities", function() {
     });
   });
   
+  describe("#isBeside()", function() {
+    it("should return true if the two locations are side-by-side", function() {
+      assert.equal(utilities.isBeside({x:2,y:2}, {x:5,y:6}), false);
+      assert.equal(utilities.isBeside({x:2,y:3}, {x:1,y:5}), false);
+      assert.equal(utilities.isBeside({x:11,y:9}, {x:11,y:7}), false);
+      assert.equal(utilities.isBeside({x:31,y:8}, {x:32,y:9}), false);
+      assert.equal(utilities.isBeside({x:10,y:20}, {x:9,y:19}), false);
+      assert.equal(utilities.isBeside({x:15,y:5}, {x:16,y:4}), false);
+      assert.equal(utilities.isBeside({x:3,y:7}, {x:2,y:8}), false);
+      assert.equal(utilities.isBeside({x:16,y:52}, {x:16,y:53}), true, "{x:16,y:52}, {x:16,y:53}");
+      assert.equal(utilities.isBeside({x:7,y:11}, {x:7,y:10}), true, "{x:7,y:11}, {x:7,y:10}");
+      assert.equal(utilities.isBeside({x:21,y:1}, {x:22,y:1}), true, "{x:21,y:1}, {x:22,y:1}");
+      assert.equal(utilities.isBeside({x:13,y:15}, {x:12,y:15}), true, "{x:13,y:15}, {x:12,y:15}");
+    });
+  });
+  
   describe("#isOpen()", function() {
     it("should return true if the location is passable and no robot is there", function() {
       let state = {};
