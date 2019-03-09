@@ -5,6 +5,7 @@ const bot = rewire('./test_compiled_bot.js');
 let utilities = bot.__get__("utilities");
 let pilgrim = bot.__get__("pilgrim");
 let SPECS = bot.__get__("SPECS");
+let nav = bot.__get__("nav")
 
 generate_grid = (x, y, val = false) => {
 	let grid = new Array(y);
@@ -20,7 +21,6 @@ generate_grid = (x, y, val = false) => {
 
 // utilities.log = (self, message) => {}; // Disable output from log statements
 utilities.log = (self, message) => {console.log(message)}; // Enable output from log statements
-
 describe("utilities", function() {
   describe("#getDistance()", function() {
     it("should return the square of the distance between two points", function() {
@@ -103,6 +103,7 @@ describe("utilities", function() {
     });
   });
 });
+
 
 describe("Pilgrim", function() {
   describe("#create_resource_map()", function() {
@@ -385,6 +386,22 @@ describe("Pilgrim", function() {
       // Robot will try to return to a square adjacent to home, so it can give resources to it
       assert.equal(result, "BUILD");
       assert.equal(pilgrim.mission, "return");
+    });
+  });
+});
+describe("nav", function() {
+  describe("#applyDir()", function() {
+    it("should return the sum of two points", function() {
+      assert.deepEqual(nav.applyDir({x:0,y:1}, {x:0,y:1}), {x:0,y:2});
+      assert.deepEqual(nav.applyDir({x:1,y:0}, {x:1,y:0}),  {x:2,y:0});
+      assert.deepEqual(nav.applyDir({x:0,y:-1}, {x:0,y:-1}),{x:0,y:-2});
+    });
+  });
+  describe("#getDir()", function() {
+    it("should return 1 or -1 based on x & y cordinates of start and  target", function() {
+      assert.deepEqual(nav.getDir({x:4,y:3}, {x:2,y:4}), {x:-1,y:1});
+      assert.deepEqual(nav.getDir({x:3,y:4}, {x:5,y:2}),  {x:1,y:-1});
+      assert.deepEqual(nav.getDir({x:5,y:6}, {x:3,y:4}),{x:-1,y:-1});
     });
   });
 });
