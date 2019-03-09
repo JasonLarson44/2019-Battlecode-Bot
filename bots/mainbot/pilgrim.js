@@ -25,6 +25,9 @@ const dirs = [
 		{ x: -1, y: 1 },
 ];
 
+// Create a merged karbonite and fuel map.
+// Doesn't return anything but assigns pilgrim.resource_map to be the 
+// merged resource map.
 pilgrim.create_resource_map = (self) => {
 	let resource_map = new Array(self.map.length);
 	for (let i = 0; i < self.map.length; i++) {
@@ -107,27 +110,21 @@ pilgrim.takeTurn = (self) => {
 
 	// Choose a mission if one already isn't selected
 	if (pilgrim.mission === undefined) {
-		if (self.karbonite < 100) {
-			pilgrim.mission = 'karbonite'
-			pilgrim.target = pilgrim.findClosestResource(self, self.karbonite_map);
-		} else {
-			pilgrim.mission = 'fuel'
-			pilgrim.target = pilgrim.findClosestResource(self, self.fuel_map);
-		}
-		utilities.log(self, `Pilgrim on ${pilgrim.mission} mission at (${pilgrim.target.x}, ${pilgrim.target.y})`)
+		pilgrim.mission = 'mine'
+		pilgrim.target = pilgrim.findClosestResource(self);
+		utilities.log(self, `Pilgrim on mining mission at (${pilgrim.target.x}, ${pilgrim.target.y})`)
 	}
 
 	// Execute current mission
 	// TODO: break out into functions
 	switch (pilgrim.mission) {
-		case 'karbonite':
-		case 'fuel':
+		case 'mine':
 			// On top of a resource deposit
 			if (pilgrim.target.x === self.me.x && pilgrim.target.y === self.me.y) {
 				// Mine until we're full
 				if (self.me.fuel < SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY &&
 					self.me.karbonite < SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
-					utilities.log(self, `Mining ${pilgrim.mission} at (${self.me.x}, ${self.me.y}) (Current: ${Math.max(self.me.fuel, self.me.karbonite)})`);
+					utilities.log(self, `Mining at (${self.me.x}, ${self.me.y}) (Current: ${Math.max(self.me.fuel, self.me.karbonite)})`);
 
 					return self.mine();
 
@@ -212,11 +209,8 @@ pilgrim.takeTurn = (self) => {
 			for (let dir of dirs) {
 				let coords = {x: self.me.x + dir.x, y: self.me.y + dir.y};
 				if (utilities.isOpen(self, coords) && // Space passable
-					!self.karbonite_map[coords.y][coords.x] && // No karbonite
-					!self.fuel_map[coords.y][coords.x] && // No fuel
-                    self.karbonite >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE && // Make sure we can build a church
-                    self.fuel >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL){
-
+					  !pilgrim.resource_map[coords.y][coords.x]) { // No resources
+					
 					utilities.log(self, `Building church at (${coords.x}, ${coords.y})`);
 					pilgrim.mission = 'return';
 					pilgrim.path = undefined;
@@ -226,6 +220,7 @@ pilgrim.takeTurn = (self) => {
 			}
 
 			// No suitable location to build a church. Make a random move and try again
+			utilities.log(self, "No suitable location to build a church.")
 			return pilgrim.random_move(self);
 
 		default:
@@ -253,24 +248,24 @@ pilgrim.move = (self, target) => {
 	if (pilgrim.path.length === 0) {
 		if (utilities.inMovementRange(self, target)) {
 			// Target in movement range, so we can move one square towards target
-			let dx = target.x - self.x;
-			let dy = target.y - self.y;
-			let step = {x: self.x, y: self.y};
+			let dx = target.x - self.me.x;
+			let dy = target.y - self.me.y;
+			let step = {x: self.me.x, y: self.me.y};
 
 			if (dx > 0) {
-				step.x = 1
+				step.x += 1;
 			} else if (dx < 0) {
-				step.dx = -1;
+				step.x -= 1;
 			}
 
 			if (dy > 0) {
-				step.y = 1;
+				step.y += 1;
 			} else if (dy < 0) {
-				step.y = -1;
+				step.y -= 1;
 			}
 
 			pilgrim.path = [step];
-			utilities.log("Closing in on target. Moving one tile toward target.");
+			utilities.log(self, "Closing in on target. Moving one tile toward target.");
 
 		} else {
 			// No valid path to target
@@ -282,7 +277,7 @@ pilgrim.move = (self, target) => {
 
 	let step = pilgrim.path.shift();
 
-	utilities.log(self, `Stepping to: (${step.x}, ${step.y})`)
+	utilities.log(self, `Stepping to: (${step.x}, ${step.y})`);
 	utilities.log(self, "Distance to step: " + utilities.getDistance(self.me, step));
 	if (utilities.getDistance(self.me, step) > SPECS.UNITS[SPECS.PILGRIM].SPEED) {
 		utilities.log(self, "Distance to far! Reverting to random movement.");
