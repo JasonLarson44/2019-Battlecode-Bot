@@ -8,38 +8,60 @@ const pilgrim = {};
 
 pilgrim.mission = undefined;// Current mission to fulfill
 pilgrim.target = undefined; // Location of resource we are mining
-pilgrim.home = undefined;   // Location of originating castle
-pilgrim.path = undefined;   // Path to follow to reach target
-pilgrim.blacklist = [];     // List of resource locations to ignore
+pilgrim.home = undefined;	 // Location of originating castle
+pilgrim.path = undefined;	 // Path to follow to reach target
+pilgrim.resource_map = undefined;
+pilgrim.blacklist = [];		 // List of resource locations to ignore
 
-const MAX_TRAVEL = 16; // Maximum (squared) distance to travel to a church or castle
+const MAX_TRAVEL = 8; // Maximum (squared) distance to travel to a church or castle
 const dirs = [
-    { x: 0, y: -1 },
-    { x: 1, y: -1 },
-    { x: -1, y: -1 },
-    { x: 1, y: 0 },
-    { x: -1, y: 0 },
-    { x: 0, y: 1 },
-    { x: 1, y: 1 },
-    { x: -1, y: 1 },
+		{ x: 0, y: -1 },
+		{ x: 1, y: -1 },
+		{ x: -1, y: -1 },
+		{ x: 1, y: 0 },
+		{ x: -1, y: 0 },
+		{ x: 0, y: 1 },
+		{ x: 1, y: 1 },
+		{ x: -1, y: 1 },
 ];
+
+// Create a merged karbonite and fuel map.
+// Doesn't return anything but assigns pilgrim.resource_map to be the 
+// merged resource map.
+pilgrim.create_resource_map = (self) => {
+	let resource_map = new Array(self.map.length);
+	for (let i = 0; i < self.map.length; i++) {
+		resource_map[i] = new Array(self.map[0].length);
+	}
+
+	let i, j;
+	for (i = 0; i < self.map.length; i++) {
+		for (j = 0; j < self.map[i].length; j++) {
+			resource_map[i][j] = self.karbonite_map[i][j] || self.fuel_map[i][j];
+		}
+	}
+
+	pilgrim.resource_map = resource_map;
+}
 	
 // Find the closest resource deposit that has not been blacklisted to my 
 // current location
 // Parameters: 
-//		map - Either this.fuel_map or this.karbonite_map
 //		blacklist - A list of locations to ignore when searching for resources
 // Returns: Object with x and y properties specifying the coordinates of the
 // closest resource deposit
-pilgrim.findClosestResource = (self, map, blacklist=[]) => {
-  var closestLocation = undefined;
-	var closestDistance = Infinity;
-	
-	var i, j;
+pilgrim.findClosestResource = (self, blacklist=[]) => {
+	let closestLocation = undefined;
+	let closestDistance = Infinity;
 
-  for (i = 0; i < map.length; i++) {
-		for (j = 0; j < map[i].length; j++) {
-			if (map[i][j]) {
+	if (pilgrim.resource_map === undefined) {
+		pilgrim.create_resource_map(self)
+	}
+	
+	let i, j;
+	for (i = 0; i < pilgrim.resource_map.length; i++) {
+		for (j = 0; j < pilgrim.resource_map[i].length; j++) {
+			if (pilgrim.resource_map[i][j]) {
 				var distance = Math.pow(self.me.x - j, 2) + Math.pow(self.me.y - i, 2);
 				if (distance < closestDistance) {
 					var blacklisted = false;
@@ -55,7 +77,7 @@ pilgrim.findClosestResource = (self, map, blacklist=[]) => {
 					if (!blacklisted) {
 						closestDistance = distance;
 						closestLocation = {x: j, y: i};
-					}	
+					}
 				}
 			}
 		}
@@ -88,27 +110,21 @@ pilgrim.takeTurn = (self) => {
 
 	// Choose a mission if one already isn't selected
 	if (pilgrim.mission === undefined) {
-		if (self.karbonite < 500) {
-			pilgrim.mission = 'karbonite'
-			pilgrim.target = pilgrim.findClosestResource(self, self.karbonite_map);
-		} else {
-			pilgrim.mission = 'fuel'
-			pilgrim.target = pilgrim.findClosestResource(self, self.fuel_map);
-		}
-		utilities.log(self, `Pilgrim on ${pilgrim.mission} mission at (${pilgrim.target.x}, ${pilgrim.target.y})`)
+		pilgrim.mission = 'mine'
+		pilgrim.target = pilgrim.findClosestResource(self);
+		utilities.log(self, `Pilgrim on mining mission at (${pilgrim.target.x}, ${pilgrim.target.y})`)
 	}
 
 	// Execute current mission
 	// TODO: break out into functions
 	switch (pilgrim.mission) {
-		case 'karbonite':
-		case 'fuel':
+		case 'mine':
 			// On top of a resource deposit
 			if (pilgrim.target.x === self.me.x && pilgrim.target.y === self.me.y) {
 				// Mine until we're full
-				if (self.me.fuel < SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY && 
+				if (self.me.fuel < SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY &&
 					self.me.karbonite < SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY) {
-					utilities.log(self, `Mining ${pilgrim.mission} at (${self.me.x}, ${self.me.y}) (Current: ${Math.max(self.me.fuel, self.me.karbonite)})`);
+					utilities.log(self, `Mining at (${self.me.x}, ${self.me.y}) (Current: ${Math.max(self.me.fuel, self.me.karbonite)})`);
 
 					return self.mine();
 
@@ -119,7 +135,7 @@ pilgrim.takeTurn = (self) => {
 						for (let r of self.getVisibleRobots()) {
 							if ((r.unit === SPECS.CASTLE || r.unit === SPECS.CHURCH) && // Unit is a castle or church
 								r.team == self.me.team && // Unit is on my team
-							 	utilities.getDistance(self.me, r) <= MAX_TRAVEL) { // Unit is reasonably close
+								 utilities.getDistance(self.me, r) <= MAX_TRAVEL) { // Unit is reasonably close
 
 								utilities.log(self, `Setting new pilgrim home at (${r.x}, ${r.y})`);
 								pilgrim.home = {x: r.x, y: r.y};
@@ -129,12 +145,20 @@ pilgrim.takeTurn = (self) => {
 							}
 						}
 						
-						// No nearby church. Build one
-						utilities.log(self, `Building a church nearby`);
-						pilgrim.mission = 'build';
-					
+						utilities.log(self, `Karbonite: ${self.karbonite}, fuel: ${self.fuel}`)
+						if (self.fuel >= SPECS['UNITS'][SPECS['CHURCH']]['CONSTRUCTION_FUEL'] + 10
+								&& self.karbonite >= SPECS['UNITS'][SPECS['CHURCH']]['CONSTRUCTION_KARBONITE']) {
+
+							// No nearby church. Build one
+							utilities.log(self, `Building a church nearby`);
+							pilgrim.mission = 'build';
+						} else {
+							utilities.log(self, `Insufficient resources to build church. Returning home.`);
+							pilgrim.mission = 'return';
+						}
+
 					} else {
-						// Reached maximum capacity, return to home castle
+						// Reached maximum capacity, return to home
 						utilities.log(self, `Max ${pilgrim.mission} capacity reached. Returning home.`);
 						pilgrim.mission = 'return';
 					}
@@ -153,7 +177,7 @@ pilgrim.takeTurn = (self) => {
 					pilgrim.path = undefined;
 					return pilgrim.takeTurn(self);
 				} else {
-					utilities.log(self, `Target: (${pilgrim.target.x}, ${pilgrim.target.y})    Location: ${[self.me.x, self.me.y]}`)
+					utilities.log(self, `Target: (${pilgrim.target.x}, ${pilgrim.target.y})		Location: ${[self.me.x, self.me.y]}`)
 					return pilgrim.move(self, pilgrim.target);
 				}
 			}
@@ -185,8 +209,7 @@ pilgrim.takeTurn = (self) => {
 			for (let dir of dirs) {
 				let coords = {x: self.me.x + dir.x, y: self.me.y + dir.y};
 				if (utilities.isOpen(self, coords) && // Space passable
-					!self.karbonite_map[coords.y][coords.x] && // No karbonite
-					!self.fuel_map[coords.y][coords.x]) { // No fuel
+					  !pilgrim.resource_map[coords.y][coords.x]) { // No resources
 					
 					utilities.log(self, `Building church at (${coords.x}, ${coords.y})`);
 					pilgrim.mission = 'return';
@@ -197,6 +220,7 @@ pilgrim.takeTurn = (self) => {
 			}
 
 			// No suitable location to build a church. Make a random move and try again
+			utilities.log(self, "No suitable location to build a church.")
 			return pilgrim.random_move(self);
 
 		default:
@@ -224,24 +248,24 @@ pilgrim.move = (self, target) => {
 	if (pilgrim.path.length === 0) {
 		if (utilities.inMovementRange(self, target)) {
 			// Target in movement range, so we can move one square towards target
-			let dx = target.x - self.x;
-			let dy = target.y - self.y;
-			let step = {x: self.x, y: self.y};
+			let dx = target.x - self.me.x;
+			let dy = target.y - self.me.y;
+			let step = {x: self.me.x, y: self.me.y};
 
 			if (dx > 0) {
-				step.x = 1
+				step.x += 1;
 			} else if (dx < 0) {
-				step.dx = -1;
+				step.x -= 1;
 			}
 
 			if (dy > 0) {
-				step.y = 1;
+				step.y += 1;
 			} else if (dy < 0) {
-				step.y = -1;
+				step.y -= 1;
 			}
 
 			pilgrim.path = [step];
-			utilities.log("Closing in on target. Moving one tile toward target.");
+			utilities.log(self, "Closing in on target. Moving one tile toward target.");
 
 		} else {
 			// No valid path to target
@@ -253,7 +277,7 @@ pilgrim.move = (self, target) => {
 
 	let step = pilgrim.path.shift();
 
-	utilities.log(self, `Stepping to: (${step.x}, ${step.y})`)
+	utilities.log(self, `Stepping to: (${step.x}, ${step.y})`);
 	utilities.log(self, "Distance to step: " + utilities.getDistance(self.me, step));
 	if (utilities.getDistance(self.me, step) > SPECS.UNITS[SPECS.PILGRIM].SPEED) {
 		utilities.log(self, "Distance to far! Reverting to random movement.");
