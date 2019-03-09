@@ -35,8 +35,10 @@ utilities.enemiesInRange = (self) => {
 	let maxRange = botSpec['ATTACK_RADIUS'][1];
 	let myTeam = self.me.team;
 	let robotsInVision = self.getVisibleRobots();
+	let dist;
 	for(let i = 0; i < robotsInVision.length; ++i){
-		if(robotsInVision[i].team !== myTeam && Math.pow(utilities.getDistance(self.me, robotsInVision[i]), 2) < maxRange){
+		dist = utilities.getDistance(self.me, robotsInVision[i]);
+		if(robotsInVision[i].team !== myTeam && dist < maxRange && dist >= minRange){
 			enemies.push(robotsInVision[i])
 		}
 	}
@@ -60,7 +62,7 @@ utilities.getDistance = (start, end) => {
 // Returns true if loc2 is the same or one of the eight adjacent cells to loc1
 utilities.isAdjacent = (loc1, loc2) => {
 	return Math.abs(loc1.x - loc2.x) <= 1 && Math.abs(loc1.y - loc2.y) <= 1;
-}
+};
 
 // Returns true if loc2 is on one of the four sides of the loc1
 utilities.isBeside = (loc1, loc2) => {
@@ -70,6 +72,48 @@ utilities.isBeside = (loc1, loc2) => {
 // Returns true if loc can be moved to this turn
 utilities.inMovementRange = (self, loc) => {
 	return utilities.getDistance(self.me, loc) <= SPECS.UNITS[self.me.unit].SPEED;
-}
+};
+
+utilities.getCastleSignal = (self) => {
+	let visibleBots = self.getVisibleRobots();
+	for(let i = 0; i < visibleBots.length; i += 1){
+		if(visibleBots[i].unit === SPECS.CASTLE){
+			return visibleBots[i].signal;
+		}
+	}
+};
+
+utilities.findClosestCastle = (self) => {
+	let visible = self.getVisibleRobots();
+
+	for(let i = 0; i < visible.length; ++i){
+		if(visible[i].unit === SPECS.CASTLE && visible[i].team === self.me.team){
+			return {x: visible[i].x, y: visible[i].y}
+		}
+	}
+	utilities.log(self, `Failed to find a nearby castle`)
+	return undefined
+};
+
+utilities.findClosestCastle = (self) => {
+	let visible = self.getVisibleRobots();
+
+	for(let i = 0; i < visible.length; ++i){
+		if(visible[i].unit === SPECS.CASTLE && visible[i].team === self.me.team){
+			return {x: visible[i].x, y: visible[i].y}
+		}
+	}
+	utilities.log(self, `Failed to find a nearby castle`)
+	return undefined
+};
+
+utilities.getCastleSignal = (self) => {
+	let visibleBots = self.getVisibleRobots();
+	for(let i = 0; i < visibleBots.length; i += 1){
+		if(visibleBots[i].unit === SPECS.CASTLE){
+			return visibleBots[i].signal;
+		}
+	}
+};
 
 export default utilities;

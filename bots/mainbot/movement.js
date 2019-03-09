@@ -215,5 +215,18 @@ movement.condense_path = (speed, path) => {
     return condensed_path;
 };
 
+movement.random = (self) => {
+
+    let dx = Math.floor(Math.random() * 3) - 1;
+    let dy = Math.floor(Math.random() * 3) - 1;
+
+    if (utilities.isOpen(self, {x: self.me.x + dx, y: self.me.y + dy})) {
+        utilities.log(self, "Randomly moving from (" + self.me.x + ", " + self.me.y + ") stepping (" + dx + ", " + dy + ")");
+        return self.move(dx, dy);
+    } else {
+        utilities.log(self, "Random movement location occupied.");
+        return;
+    };
+}
 
 export default movement;
