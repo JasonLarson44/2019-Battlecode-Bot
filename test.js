@@ -458,3 +458,117 @@ describe("nav", function() {
   });
 });
 
+describe("Castle", function(){
+
+  describe("countUnits()",function(){
+
+    it("count the number of units castle can see",function(){
+      let robot = {
+        map: generate_grid(2, 2, true),
+        me:{
+          x:1,
+          y:1,
+          unit :SPECS.CASTLE,
+          id:1234
+        },
+        getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1},{unit:SPECS.CRUSADER,id:222,x:2,y:3}];},
+        
+      }
+      let visibleBots = robot.getVisibleRobots()
+      
+      let result = castle.countUnits(robot,visibleBots)
+      console.log(result)
+      assert.equal(result,undefined)
+      });
+    
+});
+
+describe("incrementBuildCounter",function(){
+it("increment the build counter", function(){
+  let robot = {
+    map: generate_grid(2, 2, true),
+
+        me:{
+          x:1,
+          y:1,
+          unit :SPECS.CASTLE,
+          id: 1234
+        },
+        getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1}];},
+      }
+  let result = castle.incrementBuildCounter(robot)
+  assert.equal(result,undefined)   
+});
+});
+
+describe("buildUnits",function(){
+it("build units on castles turn", function(){
+  let robot = {
+    map: generate_grid(2, 2, true),
+        me:{
+          x:1,
+          y:1,
+          unit :SPECS.CASTLE,
+          id: 1234
+        },
+        getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1}];},
+        crusaderRush:() =>{return "crusaderRush"}
+  }
+  robot.strategy = "crusaderRush";
+  let result = castle.buildUnits(robot);
+  assert.equal(result, "crusaderRush");
+});
+});
+
+
+  describe("takeTurn()",function() {
+    it("first turn should find and record other castles",function(){
+
+      let robot ={
+        map: generate_grid(2, 2, true),
+        me:{
+          x:1,
+          y:1,
+          unit :SPECS.CASTLE,
+          turn:1,
+          id: 1234
+        },
+        getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1}];},
+      
+      }
+      const visible = robot.getVisibleRobots()
+      castle.countUnits(robot,visible)
+      castle.incrementBuildCounter(robot)
+      let result = castle.takeTurn(robot)
+      assert.equal(result,undefined);
+    });
+
+    it("second turn should try an build units",function(){
+
+      let robot = {
+        map: generate_grid(2, 2, true),
+        buildItems:0,
+        me:{
+          x:1,
+          y:1,
+          unit :SPECS.CASTLE,
+          id: 1234,
+          
+        },
+       
+        getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1}];},
+      }
+      const visible = robot.getVisibleRobots()
+      castle.countUnits(robot,visible)
+      castle.incrementBuildCounter(robot)
+     // robot.buildItems = 0 ;
+      //robot.castle_count = robot.getVisibleRobots()
+      robot.castle_count = visible.length
+      
+      let result = castle.takeTurn(robot);
+      assert.equal(result,"Build")
+    });
+  });
+
+});
+
