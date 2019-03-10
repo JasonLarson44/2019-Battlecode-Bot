@@ -410,94 +410,94 @@ describe("nav", function() {
 describe("movement", function() {
   describe("#aStar()", function() {
     it("should return the shortest open path to the target", function() {
-			// Generate a 5x5 grid with no objects
-			let robot = {
-	      map: generate_grid(10, 10, true),
-	      fuel: 500,
-	      karbonite: 500,
+      // Generate a 5x5 grid with no objects
+      let robot = {
+        map: generate_grid(10, 10, true),
+        fuel: 500,
+        karbonite: 500,
 
-	      me: {
-	        x: 0,
-	        y: 5,
-	        unit: SPECS.PILGRIM,
-	        fuel: 0,
-	        karbonite: SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY,
-	      },
-				getVisibleRobotMap: () => {return generate_grid(10, 10, 0);},
-				getVisibleRobots: () => {return [];},
-			};
-			let expected_path = [{x: 0, y:5}, {x: 0, y:4}, {x: 0, y:3}, {x: 0, y:2}, {x: 0, y:1}, {x: 0, y:0}]
-			let output_path = movement.aStar(robot, [robot.me.y, robot.me.x], [0, 0], robot.map)
+        me: {
+          x: 0,
+          y: 5,
+          unit: SPECS.PILGRIM,
+          fuel: 0,
+          karbonite: SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY,
+        },
+        getVisibleRobotMap: () => {return generate_grid(10, 10, 0);},
+        getVisibleRobots: () => {return [];},
+      };
+      let expected_path = [{x: 0, y:5}, {x: 0, y:4}, {x: 0, y:3}, {x: 0, y:2}, {x: 0, y:1}, {x: 0, y:0}]
+      let output_path = movement.aStar(robot, [robot.me.y, robot.me.x], [0, 0], robot.map)
 
-			for(let i = 0; i < output_path.length; ++i){
-				assert.deepEqual({x:output_path[i].x, y:output_path[i].y}, expected_path[i])
-			}
-			// Set a coordinate to impassable
-			robot.map[9][9] = false
-			assert.deepEqual(movement.aStar(robot, [robot.me.y, robot.me.x], [9, 9], robot.map), [])
+      for(let i = 0; i < output_path.length; ++i){
+        assert.deepEqual({x:output_path[i].x, y:output_path[i].y}, expected_path[i])
+      }
+      // Set a coordinate to impassable
+      robot.map[9][9] = false
+      assert.deepEqual(movement.aStar(robot, [robot.me.y, robot.me.x], [9, 9], robot.map), [])
     });
   });
-	describe("#moveTo()", function() {
+  describe("#moveTo()", function() {
     it("should return the shortest open path to the target with speed in mind", function() {
-			// Generate a 5x5 grid with no objects
-			let robot = {
-	      map: generate_grid(10, 10, true),
-	      fuel: 500,
-	      karbonite: 500,
+      // Generate a 5x5 grid with no objects
+      let robot = {
+        map: generate_grid(10, 10, true),
+        fuel: 500,
+        karbonite: 500,
 
-	      me: {
-	        x: 0,
-	        y: 5,
-	        unit: SPECS.CRUSADER,
-	        fuel: 0,
-	        karbonite: SPECS.UNITS[SPECS.CRUSADER].KARBONITE_CAPACITY,
-	      },
-				getVisibleRobotMap: () => {return generate_grid(10, 10, 0);},
-				getVisibleRobots: () => {return [];},
-			};
-			let expected_path = [{x: 0, y:3}, {x: 0, y:1}, {x: 0, y:0}]
-			let output_path = movement.moveTo(robot, 0, 0)
-			assert.notEqual(output_path.length, 0)
+        me: {
+          x: 0,
+          y: 5,
+          unit: SPECS.CRUSADER,
+          fuel: 0,
+          karbonite: SPECS.UNITS[SPECS.CRUSADER].KARBONITE_CAPACITY,
+        },
+        getVisibleRobotMap: () => {return generate_grid(10, 10, 0);},
+        getVisibleRobots: () => {return [];},
+      };
+      let expected_path = [{x: 0, y:3}, {x: 0, y:1}, {x: 0, y:0}]
+      let output_path = movement.moveTo(robot, 0, 0)
+      assert.notEqual(output_path.length, 0)
 
-			for(let i = 0; i < output_path.length; ++i){
-				assert.deepEqual({x:output_path[i].x, y:output_path[i].y}, expected_path[i])
-			}
-			// Set a coordinate to impassable
-			robot.map[9][9] = false
-			assert.deepEqual(movement.moveTo(robot, 9, 9), [])
+      for(let i = 0; i < output_path.length; ++i){
+        assert.deepEqual({x:output_path[i].x, y:output_path[i].y}, expected_path[i])
+      }
+      // Set a coordinate to impassable
+      robot.map[9][9] = false
+      assert.deepEqual(movement.moveTo(robot, 9, 9), [])
     });
   });
-	describe("#condensePath()", function() {
-		it("should return a condensed version of the path based on speed", function() {
-			// Generate a 5x5 grid with no objects
-			let speed = 9
-			let input_path = [{x: 0, y: 5}, {x: 0, y: 4}, {x: 0, y: 3}, {x: 0, y: 2}, {x: 0, y: 1}, {x: 0, y: 0}]
-			let expected_path = [{x: 0, y:3}, {x: 0, y:1}, {x: 0, y:0}]
-			let output_path = movement.condense_path(speed, input_path)
-			assert.notEqual(output_path.length, 0)
+  describe("#condensePath()", function() {
+    it("should return a condensed version of the path based on speed", function() {
+      // Generate a 5x5 grid with no objects
+      let speed = 9
+      let input_path = [{x: 0, y: 5}, {x: 0, y: 4}, {x: 0, y: 3}, {x: 0, y: 2}, {x: 0, y: 1}, {x: 0, y: 0}]
+      let expected_path = [{x: 0, y:3}, {x: 0, y:1}, {x: 0, y:0}]
+      let output_path = movement.condense_path(speed, input_path)
+      assert.notEqual(output_path.length, 0)
 
-			for(let i = 0; i < output_path.length; ++i){
-				assert.deepEqual({x:output_path[i].x, y:output_path[i].y}, expected_path[i])
-			}
-		});
-	});
-	describe("#getOpenAdj()", function() {
-		it("should return a list of all open adjacent nodes", function() {
-			// Generate a 3x3 grid with properties expected by getOpenAdj
-			let map = [
-									[{x: 0, y:0, closed: false}, {x: 1, y:0, closed: false}, {x: 2, y:0, closed: false}],
-									[{x: 0, y:1, closed: false}, {x: 1, y:1, closed: false}, {x: 2, y:1, closed: false}],
-									[{x: 0, y:2, closed: false}, {x: 1, y:2, closed: false}, {x: 2, y:2, closed: false}]
-								]
-			let node = {x: 0, y: 0}
-			let expected_output = [{x: 0, y: 1, closed: false}, {x: 1, y: 1, closed: false}, {x: 1, y: 0, closed: false}]
-			assert.deepEqual(movement.getOpenAdj(map, node), expected_output)
+      for(let i = 0; i < output_path.length; ++i){
+        assert.deepEqual({x:output_path[i].x, y:output_path[i].y}, expected_path[i])
+      }
+    });
+  });
+  describe("#getOpenAdj()", function() {
+    it("should return a list of all open adjacent nodes", function() {
+      // Generate a 3x3 grid with properties expected by getOpenAdj
+      let map = [
+        [{x: 0, y:0, closed: false}, {x: 1, y:0, closed: false}, {x: 2, y:0, closed: false}],
+        [{x: 0, y:1, closed: false}, {x: 1, y:1, closed: false}, {x: 2, y:1, closed: false}],
+        [{x: 0, y:2, closed: false}, {x: 1, y:2, closed: false}, {x: 2, y:2, closed: false}]
+      ]
+      let node = {x: 0, y: 0}
+      let expected_output = [{x: 0, y: 1, closed: false}, {x: 1, y: 1, closed: false}, {x: 1, y: 0, closed: false}]
+      assert.deepEqual(movement.getOpenAdj(map, node), expected_output)
 
-			// Set a node to closed to see if we ignore it
-			map[0][1].closed = true
-			expected_output = [{x: 0, y: 1, closed: false}, {x: 1, y: 1, closed: false}]
-			assert.deepEqual(movement.getOpenAdj(map, node), expected_output)
+      // Set a node to closed to see if we ignore it
+      map[0][1].closed = true
+      expected_output = [{x: 0, y: 1, closed: false}, {x: 1, y: 1, closed: false}]
+      assert.deepEqual(movement.getOpenAdj(map, node), expected_output)
 
-		});
-	});
+    });
+  });
 });
