@@ -6,6 +6,7 @@ let utilities = bot.__get__("utilities");
 let pilgrim = bot.__get__("pilgrim");
 let SPECS = bot.__get__("SPECS");
 let nav = bot.__get__("nav")
+let castle = bot.__get__("castle");
 
 generate_grid = (x, y, val = false) => {
 	let grid = new Array(y);
@@ -102,8 +103,58 @@ describe("utilities", function() {
       assert(!utilities.inMovementRange(state, {x:3, y:4}), "True for left-up diag");
     });
   });
+
+  describe("getCastleSignal()",function(){
+    it("Castle signal tests",function() {
+     let robot = {
+      me: {
+        x: 1,
+        y: 1,
+        unit: SPECS.CASTLE,
+      },
+
+      getVisibleRobots: () => {return [{unit: SPECS.CASTLE, x:0, y:0,signal:(0x01,5)}];},
+         }
+
+    let result = utilities.getCastleSignal(robot)
+
+    assert.equal(result, (0x01,5));
+  });
 });
 
+  describe("findClosestCastle()",function(){
+    it("Closest castle tests",function() {
+      let robot = {
+        me: {
+          x: 1,
+          y: 1,
+          unit: SPECS.CASTLE,
+          team:0,
+        },
+      getVisibleRobots: () => {return [{unit: SPECS.CASTLE, x:5, y:5,team:0}];},
+    }
+      let result = utilities.findClosestCastle(robot)
+     assert.deepEqual(result, {x:5,y:5});
+  });
+});
+
+  describe("enemiesInRange()",function(){
+    it("Find enemies that are in range", function(){
+      let robot = {
+        me: {
+          x: 1,
+          y: 1,
+          unit: SPECS.CASTLE,
+          team:0,
+        },
+  
+      getVisibleRobots: () => {return [{unit: SPECS.PROPHET, x:5, y:5,team:1}];},
+    }
+  let result = utilities.enemiesInRange(robot)
+  assert.deepEqual(result,[{team:1,unit:4,x:5,y:5}])  
+  });
+});
+});
 
 describe("Pilgrim", function() {
   describe("#create_resource_map()", function() {
@@ -389,6 +440,7 @@ describe("Pilgrim", function() {
     });
   });
 });
+
 describe("nav", function() {
   describe("#applyDir()", function() {
     it("should return the sum of two points", function() {
@@ -404,4 +456,116 @@ describe("nav", function() {
       assert.deepEqual(nav.getDir({x:5,y:6}, {x:3,y:4}),{x:-1,y:-1});
     });
   });
+});
+
+
+describe("Castle", function(){
+
+  describe("countUnits()",function(){
+
+    it("count the number of units castle can see",function(){
+      let robot = {
+        map: generate_grid(2, 2, true),
+        me:{
+          x:1,
+          y:1,
+          unit :SPECS.CASTLE,
+          id:1234
+        },
+        getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1}];},
+      }
+      let visibleBots = robot.getVisibleRobots()
+      let result = castle.countUnits(robot,visibleBots)
+      assert.equal(result,undefined)
+      });
+    
+});
+
+describe("incrementBuildCounter",function(){
+it("increment the build counter", function(){
+  let robot = {
+    map: generate_grid(2, 2, true),
+
+        me:{
+          x:1,
+          y:1,
+          unit :SPECS.CASTLE,
+          id: 1234
+        },
+        getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1}];},
+      }
+  let result = castle.incrementBuildCounter(robot)
+  assert.equal(result,undefined)   
+});
+});
+
+describe("buildUnits",function(){
+it("build units on castles turn", function(){
+  let robot = {
+    map: generate_grid(2, 2, true),
+        me:{
+          x:1,
+          y:1,
+          unit :SPECS.CASTLE,
+          id: 1234
+        },
+        getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1}];},
+        crusaderRush:() =>{return "crusaderRush"}
+  }
+  robot.strategy = "crusaderRush";
+  let result = castle.buildUnits(robot);
+  assert.equal(result, undefined);
+});
+});
+
+
+  describe("takeTurn()",function() {
+    it("first turn should find and record other castles",function(){
+
+      let robot ={
+        map: generate_grid(2, 2, true),
+        me:{
+          x:1,
+          y:1,
+          unit :SPECS.CASTLE,
+          turn:1,
+          id: 1234
+        },
+        getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1},{unit:SPECS.CASTLE,id:1235,x:5,y:1}];},
+      
+      }
+      const visible = robot.getVisibleRobots()
+      castle.countUnits(robot,visible)
+      castle.incrementBuildCounter(robot)
+      let result = castle.takeTurn(robot)
+      assert.equal(result,undefined);
+    });
+
+    it("second turn should try an build units",function(){
+
+      let robot = {
+        map: generate_grid(2, 2, true),
+        buildItems:0,
+        me:{
+          x:1,
+          y:1,
+          unit :SPECS.CASTLE,
+          id: 1234,
+          
+        },
+       
+        getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1}];},
+      }
+      const visible = robot.getVisibleRobots()
+      castle.countUnits(robot,visible)
+      castle.incrementBuildCounter(robot)
+     // robot.buildItems = 0 ;
+      //robot.castle_count = robot.getVisibleRobots()
+      robot.castle_count = visible.length
+      
+      let result = castle.takeTurn(robot);
+      assert.equal(result,"Build")
+    });
+  });
+
 });
