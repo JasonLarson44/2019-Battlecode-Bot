@@ -8,6 +8,7 @@ let SPECS = bot.__get__("SPECS");
 let nav = bot.__get__("nav");
 let castle = bot.__get__("castle");
 let combat = bot.__get__("combat");
+let movement = bot.__get__("movement");
 
 generate_grid = (x, y, val = false) => {
 	let grid = new Array(y);
@@ -17,7 +18,7 @@ generate_grid = (x, y, val = false) => {
       grid[i][j] = val;
     }
   }
-  
+
   return grid;
 }
 
@@ -31,7 +32,7 @@ describe("utilities", function() {
       assert.equal(utilities.getDistance({x:5,y:10}, {x:5,y:10}), 0);
     });
   });
-  
+
   describe("#isAdjacent()", function() {
     it("should return true if the two locations are adjacent or the same", function() {
       assert.equal(utilities.isAdjacent({x:2,y:2}, {x:5,y:6}), false);
@@ -42,7 +43,7 @@ describe("utilities", function() {
       assert.equal(utilities.isAdjacent({x:16,y:52}, {x:16,y:53}), true);
     });
   });
-  
+
   describe("#isBeside()", function() {
     it("should return true if the two locations are side-by-side", function() {
       assert.equal(utilities.isBeside({x:2,y:2}, {x:5,y:6}), false);
@@ -58,7 +59,7 @@ describe("utilities", function() {
       assert.equal(utilities.isBeside({x:13,y:15}, {x:12,y:15}), true, "{x:13,y:15}, {x:12,y:15}");
     });
   });
-  
+
   describe("#isOpen()", function() {
     it("should return true if the location is passable and no robot is there", function() {
       let state = {};
@@ -80,7 +81,7 @@ describe("utilities", function() {
       assert.equal(utilities.isOpen(state, {x:2,y:2}), true, "No wall and no visibility");
     });
   });
-  
+
   describe("#inMovementRange()", function() {
     it("Pilgrim tests", function() {
       let state = {
@@ -221,7 +222,7 @@ describe("Pilgrim", function() {
       for (let i=0; i<3; i++) {
         results.push(pilgrim.random_move(robot));
       }
-      
+
       assert(!((results[0].x === results[1].x === results[2].x) && (results[0].y === results[1].y === results[2].y)), "random_move produced 3 identical results (could be coincidence)");
 
       for (let i=0; i<results.length; i++) {
@@ -253,7 +254,7 @@ describe("Pilgrim", function() {
 
       assert.deepEqual(result, {x:0, y:1});
     });
-    
+
     it("should return an adjacent square towards target", function() {
       let robot = {
         map: generate_grid(5, 5, true),
@@ -303,7 +304,7 @@ describe("Pilgrim", function() {
 
       assert.deepEqual(result, {x:4, y:1});
     });
-    
+
     it("headed toward occupied resource, should move toward another resource", function() {
       let robot = {
         map: generate_grid(5, 5, true),
@@ -338,7 +339,7 @@ describe("Pilgrim", function() {
       assert.deepEqual(result, {x:4, y:4});
       assert.deepEqual(pilgrim.target, {x:4, y:4});
     });
-    
+
     it("on top of resource, should mine", function() {
       let robot = {
         map: generate_grid(5, 5, true),
@@ -370,7 +371,7 @@ describe("Pilgrim", function() {
 
       assert.equal(result, "MINE");
     });
-    
+
     it("mining resource and capacity full, should return home", function() {
       let robot = {
         map: generate_grid(5, 5, true),
@@ -403,7 +404,7 @@ describe("Pilgrim", function() {
       assert(utilities.isAdjacent(result, {x:4, y:4}));
       assert.equal(pilgrim.mission, "return");
     });
-    
+
     it("mining resource and capacity full, should build castle", function() {
       let robot = {
         map: generate_grid(5, 5, true),
@@ -766,4 +767,99 @@ describe("#crusaderRush",function(){
       assert.equal(result,"BUILD")
   });
 });
+});
+
+describe("movement", function() {
+  describe("#aStar()", function() {
+    it("should return the shortest open path to the target", function() {
+      // Generate a 5x5 grid with no objects
+      let robot = {
+        map: generate_grid(10, 10, true),
+        fuel: 500,
+        karbonite: 500,
+
+        me: {
+          x: 0,
+          y: 5,
+          unit: SPECS.PILGRIM,
+          fuel: 0,
+          karbonite: SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY,
+        },
+        getVisibleRobotMap: () => {return generate_grid(10, 10, 0);},
+        getVisibleRobots: () => {return [];},
+      };
+      let expected_path = [{x: 0, y:5}, {x: 0, y:4}, {x: 0, y:3}, {x: 0, y:2}, {x: 0, y:1}, {x: 0, y:0}]
+      let output_path = movement.aStar(robot, [robot.me.y, robot.me.x], [0, 0], robot.map)
+
+      for(let i = 0; i < output_path.length; ++i){
+        assert.deepEqual({x:output_path[i].x, y:output_path[i].y}, expected_path[i])
+      }
+      // Set a coordinate to impassable
+      robot.map[9][9] = false
+      assert.deepEqual(movement.aStar(robot, [robot.me.y, robot.me.x], [9, 9], robot.map), [])
+    });
+  });
+  describe("#moveTo()", function() {
+    it("should return the shortest open path to the target with speed in mind", function() {
+      // Generate a 5x5 grid with no objects
+      let robot = {
+        map: generate_grid(10, 10, true),
+        fuel: 500,
+        karbonite: 500,
+
+        me: {
+          x: 0,
+          y: 5,
+          unit: SPECS.CRUSADER,
+          fuel: 0,
+          karbonite: SPECS.UNITS[SPECS.CRUSADER].KARBONITE_CAPACITY,
+        },
+        getVisibleRobotMap: () => {return generate_grid(10, 10, 0);},
+        getVisibleRobots: () => {return [];},
+      };
+      let expected_path = [{x: 0, y:3}, {x: 0, y:1}, {x: 0, y:0}]
+      let output_path = movement.moveTo(robot, 0, 0)
+      assert.notEqual(output_path.length, 0)
+
+      for(let i = 0; i < output_path.length; ++i){
+        assert.deepEqual({x:output_path[i].x, y:output_path[i].y}, expected_path[i])
+      }
+      // Set a coordinate to impassable
+      robot.map[9][9] = false
+      assert.deepEqual(movement.moveTo(robot, 9, 9), [])
+    });
+  });
+  describe("#condensePath()", function() {
+    it("should return a condensed version of the path based on speed", function() {
+      // Generate a 5x5 grid with no objects
+      let speed = 9
+      let input_path = [{x: 0, y: 5}, {x: 0, y: 4}, {x: 0, y: 3}, {x: 0, y: 2}, {x: 0, y: 1}, {x: 0, y: 0}]
+      let expected_path = [{x: 0, y:3}, {x: 0, y:1}, {x: 0, y:0}]
+      let output_path = movement.condense_path(speed, input_path)
+      assert.notEqual(output_path.length, 0)
+
+      for(let i = 0; i < output_path.length; ++i){
+        assert.deepEqual({x:output_path[i].x, y:output_path[i].y}, expected_path[i])
+      }
+    });
+  });
+  describe("#getOpenAdj()", function() {
+    it("should return a list of all open adjacent nodes", function() {
+      // Generate a 3x3 grid with properties expected by getOpenAdj
+      let map = [
+        [{x: 0, y:0, closed: false}, {x: 1, y:0, closed: false}, {x: 2, y:0, closed: false}],
+        [{x: 0, y:1, closed: false}, {x: 1, y:1, closed: false}, {x: 2, y:1, closed: false}],
+        [{x: 0, y:2, closed: false}, {x: 1, y:2, closed: false}, {x: 2, y:2, closed: false}]
+      ]
+      let node = {x: 0, y: 0}
+      let expected_output = [{x: 0, y: 1, closed: false}, {x: 1, y: 1, closed: false}, {x: 1, y: 0, closed: false}]
+      assert.deepEqual(movement.getOpenAdj(map, node), expected_output)
+
+      // Set a node to closed to see if we ignore it
+      map[0][1].closed = true
+      expected_output = [{x: 0, y: 1, closed: false}, {x: 1, y: 1, closed: false}]
+      assert.deepEqual(movement.getOpenAdj(map, node), expected_output)
+
+    });
+  });
 });
