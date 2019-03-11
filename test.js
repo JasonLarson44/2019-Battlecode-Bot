@@ -636,7 +636,7 @@ describe("#crusaderRush",function(){
           },
           getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1,castle_talk:0x01},{unit:SPECS.CASTLE,id:1235,x:3,y:3}];},
           buildUnit: (type, dx, dy) => {return "BUILD";},
-          castleTalk:(_) => {return 0x01},
+          castleTalk:() => {return 0x01},
           getBuildDir:(dx,dy) => {return ({x:d.x,y:d.y})},
           getPassableMap:() => {return generate_grid(5,5,0)},
           getVisibleRobotMap: () => {return generate_grid(3, 3, 0);},
@@ -687,7 +687,7 @@ describe("#crusaderRush",function(){
           id: 1234
         },
         getVisibleRobots: () => {return [{unit:SPECS.CASTLE,id:1234,x:1,y:1},{unit:SPECS.CASTLE,id:1235,x:3,y:3,castle_talk:0x01}];},
-        castleTalk: (_) => {return 0x01},
+        castleTalk: () => {return 0x01},
 
       }
       const visiblebot = robot.getVisibleRobots()
@@ -755,7 +755,8 @@ describe("#crusaderRush",function(){
         {unit:SPECS.PROPHET,id:666,x:7,y:3,team:0},{unit:SPECS.PROPHET,id:667,x:9,y:9,team:0}];}, 
       getRobot:(id) => {return[{unit:SPECS.CASTLE,id:1234,x:3,y:3,castle_talk:0x01}]},     
       buildUnit: (type, dx, dy) => {return "BUILD";},
-      castleTalk: (_) => {return 0x01},
+      castleTalk: () => {return 0x01},
+      attack:(dx,dy) =>{return({x:dx,y:dy})},
     }
       const visible = robot.getVisibleRobots()
       castle.countUnits(robot,visible)
