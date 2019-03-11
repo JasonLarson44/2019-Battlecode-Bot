@@ -22,8 +22,9 @@ generate_grid = (x, y, val = false) => {
   return grid;
 }
 
-// utilities.log = (self, message) => {}; // Disable output from log statements
-utilities.log = (self, message) => {console.log(message)}; // Enable output from log statements
+utilities.log = (self, message) => {}; // Disable output from log statements
+// utilities.log = (self, message) => {console.log(message)}; // Enable output from log statements
+
 describe("utilities", function() {
   describe("#getDistance()", function() {
     it("should return the square of the distance between two points", function() {
