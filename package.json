@@ -13,7 +13,7 @@
   },
   "scripts": {
     "pretest": "bc19compile -f -d bots/mainbot/ -o test_compiled_bot.js",
-    "test": "nyc --reporter=text mocha",
+    "test": "nyc --reporter=text --reporter=html mocha",
     "posttest": "rm test_compiled_bot.js"
   },
   "repository": {
