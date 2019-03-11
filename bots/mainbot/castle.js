@@ -14,8 +14,8 @@ var builds = 0;
 var buildunitflag =0 ;
 
 castle.takeTurn = (self) => {
-    self.log('castle taking turn')
-	const visible = self.getVisibleRobots();
+    utilities.log(self, 'castle taking turn')
+    const visible = self.getVisibleRobots();
     castle.countUnits(self, visible);
     let enemies = utilities.enemiesInRange(self);
     castle.incrementBuildCounter(self);
